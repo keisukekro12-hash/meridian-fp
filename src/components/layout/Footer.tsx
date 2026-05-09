@@ -1,3 +1,5 @@
+'use client';
+
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { FooterBrand } from './FooterBrand';
 import { FooterNavColumn } from './FooterNavColumn';

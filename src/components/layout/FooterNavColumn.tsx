@@ -1,3 +1,5 @@
+'use client';
+
 type Props = {
   heading: string;
   items: { label: string; href: string }[];
