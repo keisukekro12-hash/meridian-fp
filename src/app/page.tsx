@@ -14,23 +14,7 @@ export default function HomePage() {
   return (
     <>
       {/* スキップリンク（スクリーンリーダー対応） */}
-      <a
-        href="#main-content"
-        style={{
-          position: 'absolute',
-          top: '-100px',
-          left: '16px',
-          zIndex: 100,
-          backgroundColor: 'var(--gold)',
-          color: 'var(--bg-deep)',
-          padding: '8px 16px',
-          fontSize: '13px',
-          textDecoration: 'none',
-          transition: 'top 0.2s ease',
-        }}
-        onFocus={(e) => { e.currentTarget.style.top = '16px'; }}
-        onBlur={(e)  => { e.currentTarget.style.top = '-100px'; }}
-      >
+      <a href="#main-content" className="skip-link">
         メインコンテンツへスキップ
       </a>
 
