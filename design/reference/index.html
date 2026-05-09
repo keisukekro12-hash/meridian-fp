@@ -1,0 +1,1545 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1280" />
+  <title>MERIDIAN Financial Planning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* Navy theme (default) */
+      --bg-deep: #0a1628;
+      --bg-deep-2: #0d1b30;
+      --bg-cream: #f5f1e8;
+      --bg-cream-2: #ede7d8;
+      --fg-cream: #f5f1e8;
+      --fg-muted: #b9c2d1;
+      --fg-deep: #0a1628;
+      --fg-deep-muted: #4a5568;
+      --gold: #c9a961;
+      --gold-soft: #d9bd7f;
+      --line-on-deep: rgba(201,169,97,0.22);
+      --line-on-cream: rgba(10,22,40,0.12);
+    }
+    html[data-theme="sumi"] {
+      --bg-deep: #141414;
+      --bg-deep-2: #1c1c1c;
+      --bg-cream: #f4f2ee;
+      --bg-cream-2: #ebe8e1;
+      --fg-cream: #f4f2ee;
+      --fg-muted: #b8b5ad;
+      --fg-deep: #141414;
+      --fg-deep-muted: #4a4a4a;
+      --gold: #b8956a;
+      --gold-soft: #ccaa83;
+      --line-on-deep: rgba(184,149,106,0.22);
+      --line-on-cream: rgba(20,20,20,0.12);
+    }
+    html[data-theme="emerald"] {
+      --bg-deep: #0c2a26;
+      --bg-deep-2: #0f3530;
+      --bg-cream: #f1efe6;
+      --bg-cream-2: #e7e4d6;
+      --fg-cream: #f1efe6;
+      --fg-muted: #a8c0bb;
+      --fg-deep: #0c2a26;
+      --fg-deep-muted: #3d5a55;
+      --gold: #c4a875;
+      --gold-soft: #d4bc90;
+      --line-on-deep: rgba(196,168,117,0.22);
+      --line-on-cream: rgba(12,42,38,0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif;
+      color: var(--fg-deep);
+      background: var(--bg-cream);
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "palt" 1;
+      letter-spacing: 0.02em;
+      line-height: 1.7;
+    }
+    .serif { font-family: "Noto Serif JP", "Hiragino Mincho ProN", serif; font-feature-settings: "palt" 1; }
+    .latin-serif { font-family: "Cormorant Garamond", "Noto Serif JP", serif; }
+    .mono { font-family: "JetBrains Mono", monospace; }
+
+    /* Fade-in on scroll */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 1.1s cubic-bezier(.2,.7,.2,1), transform 1.1s cubic-bezier(.2,.7,.2,1);
+      will-change: opacity, transform;
+    }
+    .reveal.in { opacity: 1; transform: none; }
+    .reveal.delay-1 { transition-delay: 0.08s; }
+    .reveal.delay-2 { transition-delay: 0.16s; }
+    .reveal.delay-3 { transition-delay: 0.24s; }
+    .reveal.delay-4 { transition-delay: 0.32s; }
+
+    /* Reusable */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+    .eyebrow {
+      font-family: "Cormorant Garamond", serif;
+      letter-spacing: 0.42em;
+      font-size: 14px;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .gold-rule {
+      width: 48px;
+      height: 1px;
+      background: var(--gold);
+      border: 0;
+      margin: 24px 0;
+    }
+
+    button { font-family: inherit; cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Buttons */
+    .btn-gold {
+      display: inline-flex; align-items: center; justify-content: space-between;
+      padding: 22px 32px;
+      background: var(--gold);
+      color: var(--bg-deep);
+      border: 0;
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      font-weight: 500;
+      min-width: 320px;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .btn-gold:hover { background: var(--gold-soft); transform: translateY(-1px); }
+    .btn-gold .arrow { font-size: 18px; }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; justify-content: space-between;
+      padding: 16px 26px;
+      background: transparent;
+      color: var(--fg-deep);
+      border: 1px solid var(--fg-deep);
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      min-width: 240px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .btn-outline:hover { background: var(--fg-deep); color: var(--bg-cream); }
+
+    .btn-ghost-light {
+      display: inline-flex; align-items: center; justify-content: space-between;
+      padding: 16px 26px;
+      background: transparent;
+      color: var(--fg-cream);
+      border: 1px solid var(--line-on-deep);
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      min-width: 240px;
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+    .btn-ghost-light:hover { border-color: var(--gold); background: rgba(201,169,97,0.08); }
+
+    /* Image placeholder */
+    .img-ph {
+      position: relative;
+      overflow: hidden;
+      background:
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 8px, transparent 8px 16px),
+        linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-deep-2) 60%, #1a2a44 100%);
+      color: var(--fg-muted);
+    }
+    .img-ph .label {
+      position: absolute;
+      left: 16px; bottom: 16px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: rgba(245,241,232,0.55);
+      text-transform: uppercase;
+    }
+    .img-ph.warm {
+      background:
+        repeating-linear-gradient(135deg, rgba(0,0,0,0.03) 0 8px, transparent 8px 16px),
+        linear-gradient(135deg, #d9c9a3 0%, #c4a875 100%);
+    }
+    .img-ph.warm .label { color: rgba(20,20,20,0.45); }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // Suppress benign ResizeObserver loop warning
+    const _onErr = window.onerror;
+    window.addEventListener('error', e => {
+      if (e.message && e.message.indexOf('ResizeObserver loop') !== -1) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    }, true);
+  </script>
+
+  <script type="text/babel" data-presets="react">
+
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "palette": ["#D97757", "#29261b", "#f6f4ef"],
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        options={['#D97757', '#2A6FDB', '#1F8A5B', '#7A5AE0']}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakColor  label="Palette" value={t.palette}
+//                        options={[['#D97757', '#29261b', '#f6f4ef'],
+//                                  ['#475569', '#0f172a', '#f1f5f9']]}
+//                        onChange={(v) => setTweak('palette', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;
+    overflow-wrap:anywhere}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+
+  .twk-chips{display:flex;gap:6px}
+  .twk-chip{position:relative;appearance:none;flex:1;min-width:0;height:46px;
+    padding:0;border:0;border-radius:6px;overflow:hidden;cursor:default;
+    box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.06);
+    transition:transform .12s cubic-bezier(.3,.7,.4,1),box-shadow .12s}
+  .twk-chip:hover{transform:translateY(-1px);
+    box-shadow:0 0 0 .5px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.12)}
+  .twk-chip[data-on="1"]{box-shadow:0 0 0 1.5px rgba(0,0,0,.85),
+    0 2px 6px rgba(0,0,0,.15)}
+  .twk-chip>span{position:absolute;top:0;bottom:0;right:0;width:34%;
+    display:flex;flex-direction:column;box-shadow:-1px 0 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i{flex:1;box-shadow:0 -1px 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i:first-child{box-shadow:none}
+  .twk-chip svg{position:absolute;top:6px;left:6px;width:13px;height:13px;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  // Accepts either setTweak('key', value) or setTweak({ key: value, ... }) so a
+  // useState-style call doesn't write a "[object Object]" key into the persisted
+  // JSON block.
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+    // Same-window signal so in-page listeners (deck-stage rail thumbnails)
+    // can react — the parent message only reaches the host, not peers.
+    window.dispatchEvent(new CustomEvent('tweakchange', { detail: edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  // Auto-inject a rail toggle when a <deck-stage> is on the page. The
+  // toggle drives the deck's per-viewer _railVisible via window message;
+  // state is mirrored from the same localStorage key the deck reads so
+  // the control reflects reality across reloads. The mechanism is the
+  // message — authors who want custom placement can post it directly
+  // and pass noDeckControls to suppress this one.
+  const hasDeckStage = React.useMemo(
+    () => typeof document !== 'undefined' && !!document.querySelector('deck-stage'),
+    [],
+  );
+  // Hide the toggle until the host has actually enabled the rail (the
+  // __omelette_rail_enabled window message, posted only when the
+  // omelette_deck_rail_enabled flag is on for this user). The initial read
+  // covers TweaksPanel mounting after the message already arrived; the
+  // listener covers the common case of mounting first.
+  const [railEnabled, setRailEnabled] = React.useState(
+    () => hasDeckStage && !!document.querySelector('deck-stage')?._railEnabled,
+  );
+  React.useEffect(() => {
+    if (!hasDeckStage || railEnabled) return undefined;
+    const onMsg = (e) => {
+      if (e.data && e.data.type === '__omelette_rail_enabled') setRailEnabled(true);
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, [hasDeckStage, railEnabled]);
+  const [railVisible, setRailVisible] = React.useState(() => {
+    try { return localStorage.getItem('deck-stage.railVisible') !== '0'; } catch (e) { return true; }
+  });
+  const toggleRail = (on) => {
+    setRailVisible(on);
+    window.postMessage({ type: '__deck_rail_visible', on }, '*');
+  };
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" data-noncommentable=""
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">
+          {children}
+          {hasDeckStage && railEnabled && !noDeckControls && (
+            <TweakSection label="Deck">
+              <TweakToggle label="Thumbnail rail" value={railVisible} onChange={toggleRail} />
+            </TweakSection>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  // Segments wrap mid-word once per-segment width runs out. The track is
+  // ~248px (280 panel − 28 body pad − 4 seg pad), each button loses 12px
+  // to its own padding, and 11.5px system-ui averages ~6.3px/char — so 2
+  // options fit ~16 chars each, 3 fit ~10. Past that (or >3 options), fall
+  // back to a dropdown rather than wrap.
+  const labelLen = (o) => String(typeof o === 'object' ? o.label : o).length;
+  const maxLen = options.reduce((m, o) => Math.max(m, labelLen(o)), 0);
+  const fitsAsSegments = maxLen <= ({ 2: 16, 3: 10 }[options.length] ?? 0);
+  if (!fitsAsSegments) {
+    // <select> emits strings — map back to the original option value so the
+    // fallback stays type-preserving (numbers, booleans) like the segment path.
+    const resolve = (s) => {
+      const m = options.find((o) => String(typeof o === 'object' ? o.value : o) === s);
+      return m === undefined ? s : typeof m === 'object' ? m.value : m;
+    };
+    return <TweakSelect label={label} value={value} options={options}
+                        onChange={(s) => onChange(resolve(s))} />;
+  }
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+// Relative-luminance contrast pick — checkmarks drawn over a swatch need to
+// read on both #111 and #fafafa without per-option configuration. Hex input
+// only (#rgb / #rrggbb); named or rgb()/hsl() colors fall through to "light".
+function __twkIsLight(hex) {
+  const h = String(hex).replace('#', '');
+  const x = h.length === 3 ? h.replace(/./g, (c) => c + c) : h.padEnd(6, '0');
+  const n = parseInt(x.slice(0, 6), 16);
+  if (Number.isNaN(n)) return true;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return r * 299 + g * 587 + b * 114 > 148000;
+}
+
+const __TwkCheck = ({ light }) => (
+  <svg viewBox="0 0 14 14" aria-hidden="true">
+    <path d="M3 7.2 5.8 10 11 4.2" fill="none" strokeWidth="2.2"
+          strokeLinecap="round" strokeLinejoin="round"
+          stroke={light ? 'rgba(0,0,0,.78)' : '#fff'} />
+  </svg>
+);
+
+// TweakColor — curated color/palette picker. Each option is either a single
+// hex string or an array of 1-5 hex strings; the card adapts — a lone color
+// renders solid, a palette renders colors[0] as the hero (left ~2/3) with the
+// rest stacked in a sharp column on the right. onChange emits the
+// option in the shape it was passed (string stays string, array stays array).
+// Without options it falls back to the native color input for back-compat.
+function TweakColor({ label, value, options, onChange }) {
+  if (!options || !options.length) {
+    return (
+      <div className="twk-row twk-row-h">
+        <div className="twk-lbl"><span>{label}</span></div>
+        <input type="color" className="twk-swatch" value={value}
+               onChange={(e) => onChange(e.target.value)} />
+      </div>
+    );
+  }
+  // Native <input type=color> emits lowercase hex per the HTML spec, so
+  // compare case-insensitively. String() guards JSON.stringify(undefined),
+  // which returns the primitive undefined (no .toLowerCase).
+  const key = (o) => String(JSON.stringify(o)).toLowerCase();
+  const cur = key(value);
+  return (
+    <TweakRow label={label}>
+      <div className="twk-chips" role="radiogroup">
+        {options.map((o, i) => {
+          const colors = Array.isArray(o) ? o : [o];
+          const [hero, ...rest] = colors;
+          const sup = rest.slice(0, 4);
+          const on = key(o) === cur;
+          return (
+            <button key={i} type="button" className="twk-chip" role="radio"
+                    aria-checked={on} data-on={on ? '1' : '0'}
+                    aria-label={colors.join(', ')} title={colors.join(' · ')}
+                    style={{ background: hero }}
+                    onClick={() => onChange(o)}>
+              {sup.length > 0 && (
+                <span>
+                  {sup.map((c, j) => <i key={j} style={{ background: c }} />)}
+                </span>
+              )}
+              {on && <__TwkCheck light={__twkIsLight(hero)} />}
+            </button>
+          );
+        })}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+
+</script>
+  <script type="text/babel" data-presets="react">
+// Minimal line icons — thin, refined, modern minimal
+const Icon = ({ children, size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+    {children}
+  </svg>
+);
+
+const IconBalance = () => (
+  <Icon>
+    <path d="M14 4 V24" />
+    <path d="M6 9 H22" />
+    <path d="M9 9 L6 17 a3 3 0 0 0 6 0 Z" />
+    <path d="M19 9 L16 17 a3 3 0 0 0 6 0 Z" />
+    <path d="M9 24 H19" />
+  </Icon>
+);
+
+const IconChart = () => (
+  <Icon>
+    <path d="M5 22 H23" />
+    <rect x="7" y="14" width="3" height="6" />
+    <rect x="13" y="9" width="3" height="11" />
+    <rect x="19" y="5" width="3" height="15" />
+  </Icon>
+);
+
+const IconShield = () => (
+  <Icon>
+    <path d="M14 4 L23 7 V14 c0 5 -4 9 -9 10 c-5 -1 -9 -5 -9 -10 V7 Z" />
+    <path d="M10 14 L13 17 L18 11" />
+  </Icon>
+);
+
+const IconUsers = () => (
+  <Icon>
+    <circle cx="11" cy="10" r="3.5" />
+    <path d="M5 22 c0 -3.5 3 -6 6 -6 s6 2.5 6 6" />
+    <circle cx="19" cy="11" r="2.8" />
+    <path d="M17 16 c3 0 6 2 6 6" />
+  </Icon>
+);
+
+const IconHome = () => (
+  <Icon>
+    <path d="M5 12 L14 5 L23 12 V22 H5 Z" />
+    <path d="M11 22 V15 H17 V22" />
+  </Icon>
+);
+
+const IconMoon = () => (
+  <Icon>
+    <path d="M20 16 a8 8 0 0 1 -10 -10 a8 8 0 1 0 10 10 Z" />
+  </Icon>
+);
+
+const IconMail = () => (
+  <Icon size={18}>
+    <rect x="4" y="7" width="20" height="14" rx="1" />
+    <path d="M4 9 L14 16 L24 9" />
+  </Icon>
+);
+
+const IconPhone = () => (
+  <Icon size={18}>
+    <path d="M9 5 L11 5 L13 10 L11 12 c1 3 3 5 6 6 L19 16 L24 18 V21 c0 1 -1 2 -2 2 c-9 0 -16 -7 -16 -16 c0 -1 1 -2 2 -2" />
+  </Icon>
+);
+
+const IconArrow = ({ size = 16 }) => (
+  <svg width={size * 1.6} height={size} viewBox="0 0 26 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 8 H22" />
+    <path d="M16 2 L22 8 L16 14" />
+  </svg>
+);
+
+Object.assign(window, { IconBalance, IconChart, IconShield, IconUsers, IconHome, IconMoon, IconMail, IconPhone, IconArrow });
+
+</script>
+  <script type="text/babel" data-presets="react">
+// ============ HEADER ============
+const Header = () => {
+  const [scrolled, setScrolled] = React.useState(false);
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const navItems = ['ホーム', '私たちについて', 'サービス', 'ご相談の流れ', 'お客様の声', 'コラム'];
+  return (
+    <header style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+      padding: scrolled ? '14px 48px' : '22px 48px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      background: scrolled ? 'rgba(10,22,40,0.92)' : 'transparent',
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: scrolled ? '1px solid var(--line-on-deep)' : '1px solid transparent',
+      transition: 'all 0.4s ease',
+      color: 'var(--fg-cream)',
+    }}>
+      <Logo />
+      <nav style={{ display: 'flex', gap: 38, fontSize: 13, letterSpacing: '0.08em' }}>
+        {navItems.map((n, i) => (
+          <a key={i} href="#" style={{
+            position: 'relative', paddingBottom: 4, transition: 'color 0.3s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--gold)'}
+          onMouseLeave={e => e.currentTarget.style.color = ''}
+          >{n}</a>
+        ))}
+      </nav>
+      <button style={{
+        display: 'inline-flex', alignItems: 'center', gap: 10,
+        padding: '14px 24px',
+        background: 'transparent',
+        color: 'var(--fg-cream)',
+        border: '1px solid var(--gold)',
+        fontSize: 13,
+        letterSpacing: '0.14em',
+        transition: 'background 0.3s',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(201,169,97,0.12)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      >
+        <IconMail />
+        無料相談を予約する
+      </button>
+    </header>
+  );
+};
+
+const Logo = ({ light = true }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+    <div className="latin-serif" style={{
+      fontSize: 24, letterSpacing: '0.32em', fontWeight: 500,
+      color: light ? 'var(--fg-cream)' : 'var(--fg-deep)',
+    }}>MERIDIAN</div>
+    <div style={{
+      fontSize: 9, letterSpacing: '0.36em', marginTop: 6, paddingTop: 6,
+      borderTop: `1px solid ${light ? 'var(--gold)' : 'var(--gold)'}`,
+      color: 'var(--gold)',
+    }}>FINANCIAL PLANNING</div>
+  </div>
+);
+
+// ============ HERO ============
+const Hero = () => (
+  <section style={{ position: 'relative', height: 760, overflow: 'hidden', background: 'var(--bg-deep)' }}>
+    {/* Background image placeholder */}
+    <div className="img-ph" style={{ position: 'absolute', inset: 0 }}>
+      {/* Subtle layered gradients to suggest cityscape + warm interior light */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: `
+          radial-gradient(ellipse at 18% 70%, rgba(180,140,80,0.35) 0%, transparent 45%),
+          radial-gradient(ellipse at 85% 40%, rgba(140,160,200,0.18) 0%, transparent 50%),
+          linear-gradient(180deg, transparent 0%, rgba(10,22,40,0.5) 100%)
+        `,
+      }} />
+      {/* Faux skyline silhouette */}
+      <svg style={{ position: 'absolute', bottom: 0, left: '40%', right: 0, width: '60%', height: 280, opacity: 0.55 }} viewBox="0 0 800 280" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#1a2a44" stopOpacity="0" />
+            <stop offset="1" stopColor="#0a1628" stopOpacity="1" />
+          </linearGradient>
+        </defs>
+        <path d="M0 280 V200 L40 200 L40 160 L80 160 L80 220 L120 220 L120 140 L160 140 L160 180 L200 180 L200 100 L240 100 L240 150 L280 150 L280 110 L320 110 L320 170 L360 170 L360 130 L400 130 L400 90 L440 90 L440 160 L480 160 L480 120 L520 120 L520 180 L560 180 L560 140 L600 140 L600 200 L640 200 L640 150 L680 150 L680 190 L720 190 L720 170 L760 170 L760 210 L800 210 V280 Z" fill="url(#sky)" />
+        {/* window dots */}
+        {Array.from({ length: 60 }).map((_, i) => (
+          <rect key={i} x={20 + (i * 13) % 760} y={150 + ((i * 7) % 90)} width="2" height="3" fill="#c9a961" opacity={0.4 + (i % 3) * 0.2} />
+        ))}
+      </svg>
+      <div className="label">[ HERO_IMAGE ] businessman silhouette · twilight cityscape · warm interior</div>
+    </div>
+
+    {/* Hero content */}
+    <div style={{
+      position: 'relative', height: '100%', maxWidth: 1200, margin: '0 auto',
+      padding: '0 48px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+    }}>
+      <div style={{ width: 620, color: 'var(--fg-cream)' }}>
+        <div className="reveal in" style={{ marginBottom: 28 }}>
+          <span className="eyebrow" style={{ display: 'inline-block', paddingLeft: 28, position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 0, top: '50%', width: 18, height: 1, background: 'var(--gold)' }}></span>
+            FOR YOUR FUTURE
+          </span>
+        </div>
+        <h1 className="serif reveal in delay-1" style={{
+          fontSize: 56, lineHeight: 1.4, fontWeight: 400, margin: 0,
+          letterSpacing: '0.04em',
+        }}>
+          未来の選択肢を、<br />
+          今の<span style={{ color: 'var(--gold)' }}>戦略</span>で広げる。
+        </h1>
+        <hr className="gold-rule reveal in delay-2" style={{ margin: '40px 0' }} />
+        <p className="reveal in delay-2" style={{
+          fontSize: 17, lineHeight: 2, color: 'var(--fg-muted)', margin: '0 0 48px',
+          fontWeight: 300,
+        }}>
+          あなたの理想の人生を実現する、<br />
+          資産運用とお金の専門パートナー。
+        </p>
+        <div className="reveal in delay-3" style={{ display: 'flex', gap: 16 }}>
+          <button className="btn-gold">
+            <span>無料で相談してみる</span>
+            <IconArrow />
+          </button>
+          <button className="btn-ghost-light">
+            <span>サービスを見る</span>
+            <IconArrow />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Scroll indicator */}
+    <div style={{
+      position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+      color: 'var(--fg-muted)', fontSize: 10, letterSpacing: '0.3em',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+    }}>
+      <span className="mono">SCROLL</span>
+      <div style={{ width: 1, height: 40, background: 'linear-gradient(180deg, var(--gold), transparent)' }} />
+    </div>
+  </section>
+);
+
+// ============ FEATURE STRIP (over hero) ============
+const FeatureStrip = () => {
+  const items = [
+    { icon: <IconMoon />, title: '中立的な立場でご提案', body: '特定の金融商品に偏らず、お客様にとって最適な選択を。' },
+    { icon: <IconChart />, title: '資産形成のプロが伴走', body: 'FPの専門知識と豊富な経験で、目標実現までサポート。' },
+    { icon: <IconShield />, title: '安心の長期サポート', body: 'ライフステージの変化にも柔軟に対応し、長期的な資産の成長を支えます。' },
+  ];
+  return (
+    <section style={{
+      position: 'relative',
+      marginTop: -80,
+      zIndex: 5,
+      paddingBottom: 0,
+    }}>
+      <div className="container">
+        <div className="reveal" style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0,
+          background: 'var(--bg-deep-2)',
+          border: '1px solid var(--line-on-deep)',
+          color: 'var(--fg-cream)',
+        }}>
+          {items.map((it, i) => (
+            <div key={i} style={{
+              padding: '40px 36px',
+              borderRight: i < 2 ? '1px solid var(--line-on-deep)' : 'none',
+              display: 'flex', gap: 22, alignItems: 'flex-start',
+            }}>
+              <div style={{ color: 'var(--gold)', flexShrink: 0, paddingTop: 4 }}>{it.icon}</div>
+              <div>
+                <h3 className="serif" style={{ margin: '0 0 10px', fontSize: 18, fontWeight: 500, letterSpacing: '0.04em' }}>{it.title}</h3>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: 1.85, color: 'var(--fg-muted)', fontWeight: 300 }}>{it.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============ ABOUT ============
+const About = () => (
+  <section style={{ background: 'var(--bg-cream)', padding: '160px 0 140px', position: 'relative', overflow: 'hidden' }}>
+    {/* decorative paper texture */}
+    <div style={{
+      position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none',
+      backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(201,169,97,0.06) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(201,169,97,0.04) 0, transparent 40%)',
+    }} />
+    <div className="container" style={{ position: 'relative' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 80, alignItems: 'center' }}>
+        <div className="reveal">
+          <div className="eyebrow">ABOUT</div>
+          <h2 className="serif" style={{
+            fontSize: 40, lineHeight: 1.6, fontWeight: 500, margin: '32px 0 0',
+            letterSpacing: '0.03em',
+          }}>
+            お金の不安を安心に変え、<br />
+            理想の人生をデザインする。
+          </h2>
+          <hr className="gold-rule" style={{ margin: '36px 0' }} />
+          <p style={{ fontSize: 15, lineHeight: 2.1, color: 'var(--fg-deep-muted)', margin: '0 0 40px', fontWeight: 400 }}>
+            将来のこと、資産のこと、誰に相談したらいいか分からない。<br />
+            そんなお悩みに寄り添い、あなたの価値観や目標に合わせた<br />
+            最適な資産戦略をご提案します。
+          </p>
+          <button className="btn-outline">
+            <span>私たちについて</span>
+            <IconArrow />
+          </button>
+        </div>
+        <div className="reveal delay-2" style={{ position: 'relative' }}>
+          <div className="img-ph warm" style={{ aspectRatio: '4 / 3', width: '100%' }}>
+            {/* Faux desk-top: notebook + watch + chart */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: `
+                radial-gradient(ellipse at 30% 50%, rgba(60,40,20,0.25) 0%, transparent 50%),
+                linear-gradient(135deg, #2a2118 0%, #4a3826 60%, #6b4f30 100%)
+              `,
+            }} />
+            {/* Notebook */}
+            <div style={{
+              position: 'absolute', left: '8%', top: '20%', width: '46%', height: '60%',
+              background: 'linear-gradient(135deg, #14110c 0%, #1f1a13 100%)',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(201,169,97,0.15)',
+              transform: 'rotate(-3deg)',
+            }}>
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+                width: 50, height: 60, border: '1px solid rgba(201,169,97,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'rgba(201,169,97,0.6)', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.2em', fontSize: 10,
+              }}>M·FP</div>
+            </div>
+            {/* Paper / chart */}
+            <div style={{
+              position: 'absolute', right: '6%', top: '14%', width: '46%', height: '70%',
+              background: '#f4f0e6',
+              boxShadow: '0 16px 40px rgba(0,0,0,0.45)',
+              transform: 'rotate(2deg)',
+              padding: 18,
+            }}>
+              <div style={{ fontFamily: 'Cormorant Garamond', fontSize: 13, color: '#2a2118', letterSpacing: '0.1em', marginBottom: 12 }}>Financial Plan</div>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 60, marginBottom: 16 }}>
+                {[40, 55, 35, 70, 50, 80, 60, 90].map((h, i) => (
+                  <div key={i} style={{ flex: 1, height: `${h}%`, background: i === 7 ? '#c9a961' : '#2a2118', opacity: i === 7 ? 1 : 0.7 }} />
+                ))}
+              </div>
+              <div style={{ width: 60, height: 60, borderRadius: '50%', border: '4px solid #c9a961', borderRightColor: '#2a2118', borderBottomColor: '#2a2118', display: 'inline-block' }} />
+              <div style={{ display: 'inline-block', marginLeft: 14, verticalAlign: 'top', paddingTop: 6 }}>
+                {[1, 2, 3].map(i => (
+                  <div key={i} style={{ height: 4, width: 60 - i * 8, background: '#2a2118', opacity: 0.6, marginBottom: 6 }} />
+                ))}
+              </div>
+            </div>
+            {/* Watch face */}
+            <div style={{
+              position: 'absolute', left: '38%', top: '8%', width: 48, height: 48, borderRadius: '50%',
+              background: 'radial-gradient(circle, #1a1a1a 0%, #0a0a0a 100%)',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.6), inset 0 0 0 2px #c9a961',
+            }}>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', width: 1, height: 14, background: '#c9a961', transformOrigin: 'top', transform: 'translate(-50%, 0) rotate(60deg)' }} />
+              <div style={{ position: 'absolute', top: '50%', left: '50%', width: 1, height: 18, background: '#c9a961', transformOrigin: 'top', transform: 'translate(-50%, 0) rotate(-30deg)' }} />
+            </div>
+            <div className="label">[ ABOUT_IMAGE ] notebook · watch · financial plan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+// ============ SERVICES ============
+const Services = () => {
+  const items = [
+    { icon: <IconChart />, label: 'CITYSCAPE', tag: 'PORTFOLIO', title: '資産運用のご相談', body: '投資の目的やリスク許容度に合わせた運用プランをご提案します。' },
+    { icon: <IconUsers />, label: 'FAMILY', tag: 'LIFE PLAN', title: 'ライフプラン設計', body: '人生の目標から逆算し、お金の計画を立てます。' },
+    { icon: <IconShield />, label: 'CONTRACT', tag: 'INSURANCE', title: '保険の見直し・最適化', body: '無駄を省き、必要な保障を適正なコストで。' },
+    { icon: <IconHome />, label: 'HOUSE', tag: 'MORTGAGE', title: '住宅購入・ローン相談', body: '資産全体を見据えた、最適な住宅購入プランをサポート。' },
+  ];
+  return (
+    <section style={{ background: 'var(--bg-deep)', color: 'var(--fg-cream)', padding: '140px 0 140px' }}>
+      <div className="container">
+        <div className="reveal" style={{ textAlign: 'center', marginBottom: 80 }}>
+          <div className="eyebrow">SERVICE</div>
+          <h2 className="serif" style={{
+            fontSize: 38, fontWeight: 500, margin: '28px 0 0',
+            letterSpacing: '0.04em',
+          }}>
+            お客様の目標に合わせた<span style={{ color: 'var(--gold)' }}>最適なサポート</span>を提供します
+          </h2>
+          <hr className="gold-rule" style={{ margin: '36px auto 0', display: 'inline-block' }} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+          {items.map((it, i) => (
+            <div key={i} className={`reveal delay-${(i % 4) + 1}`} style={{
+              border: '1px solid var(--line-on-deep)',
+              background: 'rgba(255,255,255,0.015)',
+              transition: 'transform 0.4s ease, border-color 0.4s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.borderColor = 'var(--gold)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.borderColor = ''; }}
+            >
+              {/* placeholder visual */}
+              <div className="img-ph" style={{ aspectRatio: '5 / 3' }}>
+                <ServiceVisual kind={it.label} />
+                <div className="label">[ {it.label} ]</div>
+              </div>
+              <div style={{ padding: '32px 28px 36px' }}>
+                <div className="mono" style={{ fontSize: 10, color: 'var(--gold)', letterSpacing: '0.24em', marginBottom: 18 }}>
+                  0{i + 1} · {it.tag}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, color: 'var(--gold)' }}>
+                  {it.icon}
+                </div>
+                <h3 className="serif" style={{ margin: '0 0 14px', fontSize: 19, fontWeight: 500, letterSpacing: '0.04em' }}>{it.title}</h3>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: 1.85, color: 'var(--fg-muted)', fontWeight: 300 }}>{it.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="reveal" style={{ textAlign: 'center', marginTop: 64 }}>
+          <button className="btn-ghost-light">
+            <span>サービス一覧を見る</span>
+            <IconArrow />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const ServiceVisual = ({ kind }) => {
+  if (kind === 'CITYSCAPE') return (
+    <svg viewBox="0 0 200 120" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+      <defs><linearGradient id="cv1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#3a4a64" /><stop offset="1" stopColor="#0a1628" /></linearGradient></defs>
+      <rect width="200" height="120" fill="url(#cv1)" />
+      <path d="M0 120 V90 L20 90 L20 70 L40 70 L40 100 L60 100 L60 60 L80 60 L80 80 L100 80 L100 50 L120 50 L120 75 L140 75 L140 65 L160 65 L160 90 L180 90 L180 70 L200 70 V120 Z" fill="#0a1628" opacity="0.85" />
+      {Array.from({ length: 22 }).map((_, i) => <rect key={i} x={5 + i * 9} y={62 + (i % 5) * 6} width="2" height="2" fill="#c9a961" opacity={0.6} />)}
+    </svg>
+  );
+  if (kind === 'FAMILY') return (
+    <svg viewBox="0 0 200 120" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+      <defs><linearGradient id="fv1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#d9b47a" /><stop offset="1" stopColor="#5a4a30" /></linearGradient></defs>
+      <rect width="200" height="120" fill="url(#fv1)" />
+      <circle cx="100" cy="50" r="22" fill="#f4d89a" opacity="0.8" />
+      {/* silhouettes */}
+      <path d="M70 120 V96 a8 8 0 0 1 16 0 V120 Z M76 92 a4 4 0 1 1 4 -4" fill="#1a1208" opacity="0.85" />
+      <path d="M92 120 V90 a10 10 0 0 1 20 0 V120 Z M100 84 a5 5 0 1 1 5 -5" fill="#1a1208" opacity="0.85" />
+      <path d="M118 120 V100 a6 6 0 0 1 12 0 V120 Z M122 96 a3 3 0 1 1 3 -3" fill="#1a1208" opacity="0.85" />
+    </svg>
+  );
+  if (kind === 'CONTRACT') return (
+    <svg viewBox="0 0 200 120" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+      <rect width="200" height="120" fill="#1a1208" />
+      <rect x="40" y="20" width="100" height="90" fill="#f4f0e6" transform="rotate(-3 90 65)" />
+      {[28, 38, 48, 58, 68, 78, 88].map((y, i) => <rect key={i} x="50" y={y} width={i % 2 === 0 ? 70 : 50} height="1.5" fill="#1a1208" opacity="0.5" transform="rotate(-3 90 65)" />)}
+      {/* pen */}
+      <rect x="120" y="55" width="60" height="3" fill="#c9a961" transform="rotate(25 150 56)" />
+      <polygon points="178,55 184,56.5 178,58" fill="#1a1208" transform="rotate(25 150 56)" />
+    </svg>
+  );
+  if (kind === 'HOUSE') return (
+    <svg viewBox="0 0 200 120" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+      <defs><linearGradient id="hv1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a2a44" /><stop offset="1" stopColor="#0a1628" /></linearGradient></defs>
+      <rect width="200" height="120" fill="url(#hv1)" />
+      <polygon points="60,40 140,40 150,60 50,60" fill="#0a1628" />
+      <rect x="55" y="60" width="90" height="50" fill="#0a1628" />
+      <rect x="70" y="68" width="20" height="22" fill="#c9a961" opacity="0.85" />
+      <rect x="100" y="68" width="20" height="22" fill="#c9a961" opacity="0.6" />
+      <rect x="78" y="92" width="14" height="18" fill="#c9a961" opacity="0.4" />
+    </svg>
+  );
+  return null;
+};
+
+Object.assign(window, { Header, Logo, Hero, FeatureStrip, About, Services });
+
+</script>
+  <script type="text/babel" data-presets="react">
+// ============ FLOW (STEP 1-4) ============
+const Flow = () => {
+  const steps = [
+    { n: '01', title: 'お問い合わせ', body: 'ウェブまたはお電話より、無料相談をご予約ください。', meta: 'CONTACT' },
+    { n: '02', title: 'ヒアリング', body: '現在の状況・将来のご希望を丁寧にお伺いします。', meta: 'HEARING' },
+    { n: '03', title: 'プランご提案', body: 'お客様だけのオリジナル資産戦略をご提案。', meta: 'PROPOSAL' },
+    { n: '04', title: '実行と継続サポート', body: '実行支援と定期的な見直しで、長期的に伴走します。', meta: 'SUPPORT' },
+  ];
+  return (
+    <section style={{ background: 'var(--bg-cream-2)', padding: '160px 0 140px', position: 'relative' }}>
+      <div className="container">
+        <div className="reveal" style={{ textAlign: 'center', marginBottom: 96 }}>
+          <div className="eyebrow">FLOW</div>
+          <h2 className="serif" style={{ fontSize: 38, fontWeight: 500, margin: '28px 0 0', letterSpacing: '0.04em' }}>
+            ご相談の流れ
+          </h2>
+          <hr className="gold-rule" style={{ margin: '36px auto 0' }} />
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          {/* connecting line */}
+          <div style={{
+            position: 'absolute', top: 64, left: '8%', right: '8%', height: 1,
+            background: 'linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent)',
+            opacity: 0.5,
+          }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32, position: 'relative' }}>
+            {steps.map((s, i) => (
+              <div key={i} className={`reveal delay-${i + 1}`} style={{ textAlign: 'center' }}>
+                {/* number circle */}
+                <div style={{
+                  width: 128, height: 128, margin: '0 auto 32px',
+                  borderRadius: '50%',
+                  background: 'var(--bg-cream)',
+                  border: '1px solid var(--gold)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  position: 'relative',
+                }}>
+                  <div className="mono" style={{ fontSize: 10, color: 'var(--gold)', letterSpacing: '0.32em', marginBottom: 4 }}>STEP</div>
+                  <div className="latin-serif" style={{ fontSize: 38, color: 'var(--fg-deep)', lineHeight: 1, fontWeight: 500 }}>{s.n}</div>
+                </div>
+                <div className="mono" style={{ fontSize: 10, letterSpacing: '0.24em', color: 'var(--gold)', marginBottom: 12 }}>
+                  · {s.meta} ·
+                </div>
+                <h3 className="serif" style={{ fontSize: 20, fontWeight: 500, margin: '0 0 14px', letterSpacing: '0.04em' }}>{s.title}</h3>
+                <p style={{ margin: '0 24px', fontSize: 13, lineHeight: 1.9, color: 'var(--fg-deep-muted)' }}>{s.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============ VOICE / TESTIMONIALS ============
+const Voice = () => {
+  const items = [
+    { who: '30代・会社員', body: '将来への漠然とした不安がありましたが、具体的なプランを立ててもらい、安心して資産運用を始めることができました。' },
+    { who: '40代・会社員', body: '自分に合った投資スタイルを一緒に考えてもらえたおかげで、無理なく資産形成を続けられています。' },
+    { who: '50代・経営者', body: '事業と個人の資産をトータルでご相談でき、税金対策まで含めたアドバイスが非常に役立っています。' },
+  ];
+  return (
+    <section style={{ background: 'var(--bg-cream)', padding: '140px 0 120px' }}>
+      <div className="container">
+        <div className="reveal" style={{ textAlign: 'center', marginBottom: 80 }}>
+          <div className="eyebrow">VOICE</div>
+          <h2 className="serif" style={{ fontSize: 38, fontWeight: 500, margin: '28px 0 0', letterSpacing: '0.04em' }}>
+            お客様の声
+          </h2>
+          <hr className="gold-rule" style={{ margin: '36px auto 0' }} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          {items.map((it, i) => (
+            <div key={i} className={`reveal delay-${i + 1}`} style={{
+              background: 'var(--bg-cream-2)',
+              border: '1px solid var(--line-on-cream)',
+              padding: '40px 32px',
+              position: 'relative',
+            }}>
+              <div className="latin-serif" style={{
+                position: 'absolute', top: 8, left: 16,
+                fontSize: 64, color: 'var(--gold)', opacity: 0.5, lineHeight: 1, fontWeight: 400,
+              }}>“</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 22, position: 'relative' }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: '50%',
+                  background: 'var(--bg-deep)', color: 'var(--gold)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.2">
+                    <circle cx="11" cy="8" r="3.2" />
+                    <path d="M4 19 c0 -3 3 -5 7 -5 s7 2 7 5" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="mono" style={{ fontSize: 10, color: 'var(--gold)', letterSpacing: '0.2em' }}>CASE 0{i + 1}</div>
+                  <div style={{ fontSize: 13, color: 'var(--fg-deep)', marginTop: 4, fontWeight: 500 }}>{it.who}</div>
+                </div>
+              </div>
+              <p style={{ margin: 0, fontSize: 13.5, lineHeight: 2, color: 'var(--fg-deep-muted)' }}>{it.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="reveal" style={{ textAlign: 'center', marginTop: 48, fontSize: 11, color: 'var(--fg-deep-muted)', letterSpacing: '0.05em' }}>
+          ※個人の感想であり、成果を保証するものではありません。
+        </div>
+        <div className="reveal" style={{ textAlign: 'center', marginTop: 32 }}>
+          <button className="btn-outline">
+            <span>もっと見る</span>
+            <IconArrow />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============ FINAL CTA ============
+const FinalCTA = () => (
+  <section style={{ position: 'relative', background: 'var(--bg-deep)', color: 'var(--fg-cream)', padding: '120px 0', overflow: 'hidden' }}>
+    {/* subtle backdrop */}
+    <div style={{
+      position: 'absolute', inset: 0, opacity: 0.6,
+      background: `
+        radial-gradient(ellipse at 30% 50%, rgba(201,169,97,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 50%, rgba(201,169,97,0.05) 0%, transparent 60%)
+      `,
+    }} />
+    {/* decorative dots */}
+    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.4 }}>
+      {Array.from({ length: 30 }).map((_, i) => (
+        <circle key={i} cx={`${(i * 137) % 100}%`} cy={`${(i * 53) % 100}%`} r="1" fill="#c9a961" opacity={(i % 5) * 0.18 + 0.1} />
+      ))}
+    </svg>
+
+    <div className="container reveal" style={{ position: 'relative', textAlign: 'center' }}>
+      <div className="eyebrow" style={{ marginBottom: 28 }}>CONTACT</div>
+      <h2 className="serif" style={{ fontSize: 44, fontWeight: 500, margin: 0, letterSpacing: '0.05em', lineHeight: 1.5 }}>
+        資産運用の<span style={{ color: 'var(--gold)' }}>第一歩</span>を、私たちと一緒に。
+      </h2>
+      <hr className="gold-rule" style={{ margin: '36px auto' }} />
+      <p style={{ fontSize: 15, lineHeight: 2, color: 'var(--fg-muted)', margin: '0 0 56px', fontWeight: 300 }}>
+        無料相談で、あなたの未来の可能性を広げましょう。
+      </p>
+      <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <button className="btn-gold">
+          <span>無料相談を予約する</span>
+          <IconArrow />
+        </button>
+        <button className="btn-ghost-light" style={{ minWidth: 280 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <IconPhone /> 03-0000-0000
+          </span>
+          <span className="mono" style={{ fontSize: 10, color: 'var(--gold)', letterSpacing: '0.2em' }}>10:00–19:00</span>
+        </button>
+      </div>
+    </div>
+  </section>
+);
+
+// ============ FOOTER ============
+const Footer = () => (
+  <footer style={{ background: '#06101e', color: 'var(--fg-muted)', padding: '80px 0 32px', borderTop: '1px solid var(--line-on-deep)' }}>
+    <div className="container">
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 48, marginBottom: 64 }}>
+        <div>
+          <Logo />
+          <p style={{ fontSize: 12, lineHeight: 1.9, color: 'var(--fg-muted)', marginTop: 28, fontWeight: 300 }}>
+            お客様の人生に寄り添う、<br />
+            独立系ファイナンシャルプランニング。
+          </p>
+        </div>
+        {[
+          { title: 'SERVICE', items: ['資産運用のご相談', 'ライフプラン設計', '保険の見直し', '住宅ローン相談'] },
+          { title: 'COMPANY', items: ['私たちについて', 'チーム', 'コラム', 'お問い合わせ'] },
+          { title: 'CONTACT', items: ['東京都港区青山1-2-3', '03-0000-0000', 'info@meridian-fp.jp'] },
+        ].map((col, i) => (
+          <div key={i}>
+            <div className="mono" style={{ fontSize: 10, color: 'var(--gold)', letterSpacing: '0.32em', marginBottom: 24 }}>{col.title}</div>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+              {col.items.map((it, j) => (
+                <li key={j} style={{ fontSize: 12, marginBottom: 14, color: 'var(--fg-muted)', fontWeight: 300, letterSpacing: '0.02em' }}>{it}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div style={{
+        paddingTop: 28, borderTop: '1px solid var(--line-on-deep)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        fontSize: 11, color: 'var(--fg-muted)', letterSpacing: '0.05em',
+      }}>
+        <div>© 2026 MERIDIAN Financial Planning. All rights reserved.</div>
+        <div style={{ display: 'flex', gap: 28 }}>
+          <a href="#">プライバシーポリシー</a>
+          <a href="#">利用規約</a>
+          <a href="#">特定商取引法に基づく表記</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+);
+
+Object.assign(window, { Flow, Voice, FinalCTA, Footer });
+
+</script>
+  <script type="text/babel" data-presets="react">
+// =============== TWEAKS DEFAULTS ===============
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "navy",
+  "showTopBar": true,
+  "showFlow": true
+}/*EDITMODE-END*/;
+
+// =============== SCROLL REVEAL ===============
+const useScrollReveal = () => {
+  React.useEffect(() => {
+    const els = document.querySelectorAll('.reveal:not(.in)');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -80px 0px' });
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  });
+};
+
+// =============== TOP BAR (above header) ===============
+const TopBar = () => (
+  <div style={{
+    position: 'relative', zIndex: 51,
+    padding: '8px 48px',
+    background: '#06101e', color: 'var(--fg-muted)',
+    fontSize: 11, letterSpacing: '0.1em',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    borderBottom: '1px solid var(--line-on-deep)',
+  }}>
+    <div className="mono" style={{ color: 'var(--gold)' }}>· INDEPENDENT FINANCIAL PLANNING ·</div>
+    <div style={{ display: 'flex', gap: 28 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <IconPhone /> 03-0000-0000
+      </span>
+      <span>10:00 – 19:00 (土日祝除く)</span>
+    </div>
+  </div>
+);
+
+// =============== APP ===============
+const App = () => {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', t.theme);
+  }, [t.theme]);
+
+  useScrollReveal();
+
+  return (
+    <div data-screen-label="Homepage">
+      {t.showTopBar && <TopBar />}
+      <Header />
+      <main>
+        <Hero />
+        <FeatureStrip />
+        <About />
+        <Services />
+        {t.showFlow && <Flow />}
+        <Voice />
+        <FinalCTA />
+      </main>
+      <Footer />
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Theme">
+          <TweakRadio
+            label="カラーテーマ"
+            value={t.theme}
+            onChange={v => setTweak('theme', v)}
+            options={[
+              { label: 'Navy', value: 'navy' },
+              { label: '墨黒', value: 'sumi' },
+              { label: 'Emerald', value: 'emerald' },
+            ]}
+          />
+        </TweakSection>
+        <TweakSection title="Layout">
+          <TweakToggle
+            label="トップバー (連絡先)"
+            checked={t.showTopBar}
+            onChange={v => setTweak('showTopBar', v)}
+          />
+          <TweakToggle
+            label="ご相談の流れ (FLOW)"
+            checked={t.showFlow}
+            onChange={v => setTweak('showFlow', v)}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+
+</body>
+</html>
