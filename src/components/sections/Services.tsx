@@ -90,6 +90,7 @@ const SERVICES = [
 export const Services = () => (
   <section
     id="services"
+    className="rsp-pad"
     style={{
       backgroundColor: 'var(--bg-deep)',
       color: 'var(--fg-cream)',
@@ -108,6 +109,7 @@ export const Services = () => (
       >
         <Eyebrow style={{ justifyContent: 'center' }}>SERVICE</Eyebrow>
         <h2
+          className="rsp-h2"
           style={{
             fontFamily: 'var(--font-serif), serif',
             fontSize: '44px',
@@ -125,6 +127,7 @@ export const Services = () => (
 
       {/* 4カラムグリッド */}
       <div
+        className="rsp-2col"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',

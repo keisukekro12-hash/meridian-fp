@@ -39,7 +39,7 @@ export const FeatureStrip = () => (
     }}
   >
     <div
-      className="container-main"
+      className="container-main rsp-1col"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
@@ -52,6 +52,7 @@ export const FeatureStrip = () => (
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.08 }}
+          className="rsp-feature-item"
           style={{
             display: 'flex',
             alignItems: 'flex-start',

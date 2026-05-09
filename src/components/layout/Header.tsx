@@ -73,7 +73,7 @@ export const Header = () => {
           </ul>
         </nav>
 
-        {/* CTA */}
+        {/* CTA (デスクトップ) */}
         <a
           href="#contact"
           className="btn btn-ghost-light hidden lg:inline-flex"
@@ -82,6 +82,27 @@ export const Header = () => {
         >
           <span>無料相談を予約する</span>
           <Mail size={14} strokeWidth={1.2} aria-hidden />
+        </a>
+
+        {/* CTA (モバイル) */}
+        <a
+          href="#contact"
+          className="lg:hidden"
+          aria-label="無料相談"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            letterSpacing: '0.06em',
+            color: 'var(--gold)',
+            textDecoration: 'none',
+            padding: '8px 12px',
+            border: '1px solid var(--gold)',
+          }}
+        >
+          <span>無料相談</span>
+          <Mail size={12} strokeWidth={1.2} aria-hidden />
         </a>
       </div>
     </header>

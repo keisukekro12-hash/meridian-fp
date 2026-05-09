@@ -21,6 +21,7 @@ export const Footer = () => (
     <div className="container-main">
       {/* 4カラムグリッド */}
       <div
+        className="rsp-footer-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: '1.4fr 1fr 1fr 1fr',
@@ -28,7 +29,7 @@ export const Footer = () => (
           paddingBottom: '48px',
         }}
       >
-        <FooterBrand />
+        <div className="rsp-footer-brand"><FooterBrand /></div>
 
         <FooterNavColumn
           heading="SERVICE"

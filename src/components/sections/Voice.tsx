@@ -29,6 +29,7 @@ const TESTIMONIALS = [
 export const Voice = () => (
   <section
     id="voice"
+    className="rsp-pad"
     style={{
       backgroundColor: 'var(--bg-cream)',
       color: 'var(--fg-deep)',
@@ -47,6 +48,7 @@ export const Voice = () => (
       >
         <Eyebrow style={{ justifyContent: 'center' }}>VOICE</Eyebrow>
         <h2
+          className="rsp-h2"
           style={{
             fontFamily: 'var(--font-serif), serif',
             fontSize: '44px',
@@ -62,6 +64,7 @@ export const Voice = () => (
 
       {/* 3カラム */}
       <div
+        className="rsp-1col"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',

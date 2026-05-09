@@ -33,6 +33,7 @@ const STEPS = [
 export const Flow = () => (
   <section
     id="flow"
+    className="rsp-pad"
     style={{
       backgroundColor: 'var(--bg-cream-2)',
       color: 'var(--fg-deep)',
@@ -51,6 +52,7 @@ export const Flow = () => (
       >
         <Eyebrow style={{ justifyContent: 'center' }}>FLOW</Eyebrow>
         <h2
+          className="rsp-h2"
           style={{
             fontFamily: 'var(--font-serif), serif',
             fontSize: '44px',
@@ -69,6 +71,7 @@ export const Flow = () => (
         {/* 接続線 */}
         <div
           aria-hidden
+          className="rsp-hide"
           style={{
             position: 'absolute',
             top: '64px',
@@ -80,6 +83,7 @@ export const Flow = () => (
         />
 
         <div
+          className="rsp-2col"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
@@ -97,6 +101,7 @@ export const Flow = () => (
             >
               {/* 円形バッジ */}
               <div
+                className="rsp-flow-badge"
                 style={{
                   width: '128px',
                   height: '128px',
@@ -125,6 +130,7 @@ export const Flow = () => (
                   STEP
                 </span>
                 <span
+                  className="rsp-flow-badge-num"
                   style={{
                     fontFamily: 'var(--font-latin-serif), serif',
                     fontSize: '38px',

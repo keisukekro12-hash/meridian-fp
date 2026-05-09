@@ -33,6 +33,7 @@ const DotField = () => (
 export const FinalCTA = () => (
   <section
     id="contact"
+    className="rsp-pad"
     style={{
       position: 'relative',
       backgroundColor: 'var(--bg-deep)',
@@ -88,6 +89,7 @@ export const FinalCTA = () => (
         <Eyebrow style={{ justifyContent: 'center' }}>CONTACT</Eyebrow>
 
         <h2
+          className="rsp-h2"
           style={{
             fontFamily: 'var(--font-serif), serif',
             fontSize: '44px',
@@ -104,7 +106,7 @@ export const FinalCTA = () => (
         </h2>
 
         <div
-          className="flex flex-wrap items-center justify-center gap-5"
+          className="flex flex-wrap items-center justify-center gap-5 rsp-cta-btns"
         >
           <Button variant="gold" href="#contact">
             無料相談を予約する

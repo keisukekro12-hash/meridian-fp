@@ -17,6 +17,7 @@ const fadeUp = {
 export const Hero = () => (
   <section
     id="hero"
+    className="rsp-hero"
     style={{
       position: 'relative',
       height: '760px',
@@ -47,7 +48,7 @@ export const Hero = () => (
 
     {/* コピーブロック（右寄せ） */}
     <div className="container-main w-full" style={{ position: 'relative', zIndex: 2 }}>
-      <div style={{ maxWidth: '620px', marginLeft: 'auto' }}>
+      <div className="rsp-hero-copy" style={{ maxWidth: '620px', marginLeft: 'auto' }}>
         <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.1 }}>
           <Eyebrow>— FOR YOUR FUTURE</Eyebrow>
         </motion.div>
@@ -56,6 +57,7 @@ export const Hero = () => (
           initial={{ opacity: 0, y: 32 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          className="rsp-hero-h1"
           style={{
             fontFamily: 'var(--font-serif), serif',
             fontSize: '56px',
@@ -95,7 +97,7 @@ export const Hero = () => (
         <motion.div
           {...fadeUp}
           transition={{ ...fadeUp.transition, delay: 0.55 }}
-          className="flex flex-wrap gap-4"
+          className="flex flex-col sm:flex-row flex-wrap gap-4"
         >
           <Button variant="gold" href="#contact">無料で相談してみる</Button>
           <Button variant="ghost-light" href="#services">サービスを見る</Button>

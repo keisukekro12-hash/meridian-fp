@@ -71,6 +71,7 @@ const DeskPlaceholder = () => (
 export const About = () => (
   <section
     id="about"
+    className="rsp-pad"
     style={{
       backgroundColor: 'var(--bg-cream)',
       color: 'var(--fg-deep)',
@@ -79,7 +80,7 @@ export const About = () => (
     aria-label="私たちについて"
   >
     <div
-      className="container-main"
+      className="container-main rsp-1col"
       style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1.1fr',
@@ -97,6 +98,7 @@ export const About = () => (
         <Eyebrow>ABOUT</Eyebrow>
 
         <h2
+          className="rsp-h2"
           style={{
             fontFamily: 'var(--font-serif), serif',
             fontSize: '40px',
@@ -151,7 +153,7 @@ export const About = () => (
       </motion.div>
 
       {/* 右: 画像 */}
-      <motion.div
+      <motion.div className="rsp-about-img"
         initial={{ opacity: 0, x: 32 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true, margin: '-60px' }}

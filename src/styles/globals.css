@@ -320,3 +320,94 @@ body {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
 }
+
+/* ============================================================
+   レスポンシブ対応
+   ============================================================ */
+
+/* タブレット〜スマホ (≤768px) */
+@media (max-width: 768px) {
+
+  /* ── ボタン ── */
+  .btn-gold        { min-width: 0; width: 100%; }
+  .btn-outline     { min-width: 0; width: 100%; }
+  .btn-ghost-light { min-width: 0; }
+
+  /* ── Hero ── */
+  .rsp-hero {
+    height: auto !important;
+    min-height: 560px;
+    padding: 110px 0 72px !important;
+    align-items: flex-start !important;
+  }
+  .rsp-hero-copy {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+  }
+  .rsp-hero-h1  { font-size: 36px !important; }
+  .rsp-hero-sub { max-width: 100% !important; }
+
+  /* ── セクション共通パディング ── */
+  .rsp-pad {
+    padding-top:    80px !important;
+    padding-bottom: 72px !important;
+  }
+
+  /* ── セクション見出し ── */
+  .rsp-h2 { font-size: 30px !important; }
+
+  /* ── グリッド → 1カラム ── */
+  .rsp-1col {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
+  /* ── グリッド → 2カラム（タブレット）── */
+  .rsp-2col {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* ── FeatureStrip ─ 縦並び境界線 ── */
+  .rsp-feature-item {
+    border-right: none !important;
+    border-bottom: 1px solid var(--line-on-deep);
+  }
+  .rsp-feature-item:last-child { border-bottom: none !important; }
+
+  /* ── About 画像: モバイルでは非表示 ── */
+  .rsp-about-img { display: none !important; }
+
+  /* ── 接続線 / 装飾: モバイルでは非表示 ── */
+  .rsp-hide { display: none !important; }
+
+  /* ── Footer グリッド ── */
+  .rsp-footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 32px !important;
+    padding-bottom: 32px !important;
+  }
+  .rsp-footer-brand { grid-column: 1 / -1; }
+
+  /* ── FinalCTA ボタン群 ── */
+  .rsp-cta-btns {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  /* ── Flow ステップ円バッジ ── */
+  .rsp-flow-badge {
+    width: 96px !important;
+    height: 96px !important;
+  }
+  .rsp-flow-badge-num { font-size: 28px !important; }
+}
+
+/* 小型スマホ (≤480px) */
+@media (max-width: 480px) {
+  .rsp-2col       { grid-template-columns: 1fr !important; }
+  .rsp-footer-grid { grid-template-columns: 1fr !important; }
+  .rsp-hero-h1    { font-size: 30px !important; }
+  .rsp-h2         { font-size: 26px !important; }
+}
