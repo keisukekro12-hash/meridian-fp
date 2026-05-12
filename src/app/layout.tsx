@@ -48,7 +48,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="ja"
-      data-theme="navy"
       className={[
         notoSerifJP.variable,
         notoSansJP.variable,

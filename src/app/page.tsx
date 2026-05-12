@@ -1,4 +1,3 @@
-import { NoiseOverlay } from '@/components/glass/NoiseOverlay';
 import { TopBar }      from '@/components/layout/TopBar';
 import { Header }      from '@/components/layout/Header';
 import { Footer }      from '@/components/layout/Footer';
@@ -17,9 +16,6 @@ export default function HomePage() {
       <a href="#main-content" className="skip-link">
         メインコンテンツへスキップ
       </a>
-
-      {/* グローバルノイズオーバーレイ（質感） */}
-      <NoiseOverlay />
 
       {/* TopBar */}
       <TopBar />

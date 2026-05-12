@@ -25,8 +25,10 @@ export const Header = () => {
         left: 0,
         right: 0,
         zIndex: 50,
-        backgroundColor: scrolled ? 'rgba(10,22,40,0.92)' : 'transparent',
-        borderBottom: scrolled ? '1px solid var(--line-on-deep)' : '1px solid transparent',
+        backgroundColor: scrolled ? 'rgba(250,248,243,0.96)' : 'rgba(250,248,243,0.85)',
+        borderBottom: scrolled ? '1px solid var(--line-on-cream)' : '1px solid transparent',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         transition: 'background-color 0.4s ease, border-color 0.4s ease, padding 0.4s ease',
       }}
       className="glass-header"
@@ -55,15 +57,15 @@ export const Header = () => {
                     fontFamily: 'var(--font-sans), sans-serif',
                     fontSize: '13px',
                     letterSpacing: '0.04em',
-                    color: 'var(--fg-cream)',
+                    color: 'var(--fg-deep)',
                     textDecoration: 'none',
                     transition: 'color 0.3s ease',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.color = 'var(--gold)';
+                    (e.currentTarget as HTMLAnchorElement).style.color = 'var(--green-mid)';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.color = 'var(--fg-cream)';
+                    (e.currentTarget as HTMLAnchorElement).style.color = 'var(--fg-deep)';
                   }}
                 >
                   {item.label}
@@ -76,9 +78,9 @@ export const Header = () => {
         {/* CTA (デスクトップ) */}
         <a
           href="#contact"
-          className="btn btn-ghost-light hidden lg:inline-flex"
+          className="btn btn-gold hidden lg:inline-flex"
           aria-label="無料相談を予約する"
-          style={{ minWidth: 'auto', gap: '12px' }}
+          style={{ minWidth: 'auto', gap: '10px', padding: '12px 20px', fontSize: '12px' }}
         >
           <span>無料相談を予約する</span>
           <Mail size={14} strokeWidth={1.2} aria-hidden />
@@ -95,10 +97,11 @@ export const Header = () => {
             gap: '6px',
             fontSize: '12px',
             letterSpacing: '0.06em',
-            color: 'var(--gold)',
+            color: 'var(--green-mid)',
             textDecoration: 'none',
             padding: '8px 12px',
-            border: '1px solid var(--gold)',
+            border: '1px solid var(--green-mid)',
+            borderRadius: '2px',
           }}
         >
           <span>無料相談</span>

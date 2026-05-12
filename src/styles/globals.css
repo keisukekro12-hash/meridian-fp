@@ -3,59 +3,27 @@
 @tailwind utilities;
 
 /* ============================================================
-   CSS変数 — テーマシステム
+   CSS変数 — ライト×セージグリーンテーマ
    ============================================================ */
 
-:root,
-[data-theme="navy"] {
-  --bg-deep:        #0a1628;
-  --bg-deep-2:      #0d1b30;
-  --bg-cream:       #f5f1e8;
-  --bg-cream-2:     #ede7d8;
-  --fg-cream:       #f5f1e8;
-  --fg-muted:       #b9c2d1;
-  --fg-deep:        #0a1628;
-  --fg-deep-muted:  #4a5568;
-  --gold:           #c9a961;
-  --gold-soft:      #d9bd7f;
-  --line-on-deep:   rgba(201, 169, 97, 0.22);
-  --line-on-cream:  rgba(10, 22, 40, 0.12);
-  --topbar-bg:      #06101e;
-  --footer-bg:      #06101e;
-}
-
-[data-theme="sumi"] {
-  --bg-deep:        #141414;
-  --bg-deep-2:      #1c1c1c;
-  --bg-cream:       #f4f2ee;
-  --bg-cream-2:     #ebe8e1;
-  --fg-cream:       #f4f2ee;
-  --fg-muted:       #a8a8a8;
-  --fg-deep:        #141414;
-  --fg-deep-muted:  #5a5a5a;
-  --gold:           #b8956a;
-  --gold-soft:      #ccaa83;
-  --line-on-deep:   rgba(184, 149, 106, 0.22);
-  --line-on-cream:  rgba(20, 20, 20, 0.12);
-  --topbar-bg:      #0a0a0a;
-  --footer-bg:      #0a0a0a;
-}
-
-[data-theme="emerald"] {
-  --bg-deep:        #0c2a26;
-  --bg-deep-2:      #0f3530;
-  --bg-cream:       #f1efe6;
-  --bg-cream-2:     #e7e4d6;
-  --fg-cream:       #f1efe6;
-  --fg-muted:       #8ab4af;
-  --fg-deep:        #0c2a26;
-  --fg-deep-muted:  #4a6460;
-  --gold:           #c4a875;
-  --gold-soft:      #d4bc90;
-  --line-on-deep:   rgba(196, 168, 117, 0.22);
-  --line-on-cream:  rgba(12, 42, 38, 0.12);
-  --topbar-bg:      #061812;
-  --footer-bg:      #061812;
+:root {
+  --bg-deep:        #faf8f3;
+  --bg-deep-2:      #f0ede4;
+  --bg-cream:       #ffffff;
+  --bg-cream-2:     #f5f2eb;
+  --fg-cream:       #2d2d2d;
+  --fg-muted:       #888888;
+  --fg-deep:        #2d2d2d;
+  --fg-deep-muted:  #666666;
+  --gold:           #6b8a5a;
+  --gold-soft:      #8aaa72;
+  --line-on-deep:   rgba(107, 138, 90, 0.22);
+  --line-on-cream:  rgba(45, 45, 45, 0.12);
+  --topbar-bg:      #edeae2;
+  --footer-bg:      #3a5229;
+  --green-dark:     #3a5229;
+  --green-mid:      #6b8a5a;
+  --green-light:    #e8ede3;
 }
 
 /* ============================================================
@@ -199,42 +167,64 @@ body {
 }
 
 .btn-gold {
-  padding: 22px 32px;
-  min-width: 320px;
-  background-color: var(--gold);
-  color: var(--bg-deep);
+  padding: 16px 32px;
+  min-width: 260px;
+  background-color: var(--green-mid);
+  color: #ffffff;
   border: none;
+  border-radius: 2px;
 }
 
 .btn-gold:hover {
-  background-color: var(--gold-soft);
+  background-color: var(--green-dark);
 }
 
 .btn-outline {
-  padding: 16px 26px;
-  min-width: 240px;
+  padding: 14px 26px;
+  min-width: 220px;
   background-color: transparent;
   color: var(--fg-deep);
-  border: 1px solid var(--fg-deep);
+  border: 1px solid var(--green-mid);
+  border-radius: 2px;
 }
 
 .btn-outline:hover {
-  background-color: var(--fg-deep);
-  color: var(--fg-cream);
+  background-color: var(--green-light);
 }
 
 .btn-ghost-light {
-  padding: 16px 26px;
-  min-width: 240px;
+  padding: 14px 26px;
+  min-width: 220px;
   background-color: transparent;
-  color: var(--fg-cream);
-  border: 1px solid var(--line-on-deep);
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 2px;
 }
 
 .btn-ghost-light:hover {
-  border-color: var(--gold);
-  background-color: rgba(201, 169, 97, 0.08);
+  border-color: #ffffff;
+  background-color: rgba(255,255,255,0.1);
 }
+
+/* ダークCTA用ボタン */
+.btn-cta-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 40px;
+  background-color: var(--green-mid);
+  color: #ffffff;
+  border: none;
+  border-radius: 2px;
+  font-family: var(--font-sans), sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+.btn-cta-dark:hover { background-color: var(--green-dark); }
 
 /* ============================================================
    Eyebrow
@@ -336,16 +326,15 @@ body {
   /* ── Hero ── */
   .rsp-hero {
     height: auto !important;
-    min-height: 560px;
-    padding: 110px 0 72px !important;
-    align-items: flex-start !important;
+    min-height: 480px !important;
+    padding: 100px 0 60px !important;
   }
-  .rsp-hero-copy {
-    max-width: 100% !important;
-    margin-left: 0 !important;
+  .rsp-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
   }
-  .rsp-hero-h1  { font-size: 36px !important; }
-  .rsp-hero-sub { max-width: 100% !important; }
+  .rsp-hero-photo { display: none !important; }
+  .rsp-hero-h1    { font-size: 32px !important; }
 
   /* ── セクション共通パディング ── */
   .rsp-pad {

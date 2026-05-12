@@ -36,8 +36,8 @@ export const FinalCTA = () => (
     className="rsp-pad"
     style={{
       position: 'relative',
-      backgroundColor: 'var(--bg-deep)',
-      color: 'var(--fg-cream)',
+      backgroundColor: 'var(--green-dark)',
+      color: '#ffffff',
       padding: '120px 0',
       overflow: 'hidden',
       textAlign: 'center',
@@ -96,7 +96,7 @@ export const FinalCTA = () => (
             fontWeight: 500,
             letterSpacing: '0.04em',
             lineHeight: 1.5,
-            color: 'var(--fg-cream)',
+            color: '#ffffff',
             marginBottom: '48px',
           }}
         >

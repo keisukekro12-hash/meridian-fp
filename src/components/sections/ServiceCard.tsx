@@ -21,8 +21,8 @@ export const ServiceCard = ({ index, metaTag, icon, title, body, placeholder, de
     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
     whileHover={{ y: -6 }}
     style={{
-      border: '1px solid var(--line-on-deep)',
-      backgroundColor: 'transparent',
+      border: '1px solid var(--line-on-cream)',
+      backgroundColor: '#ffffff',
       cursor: 'default',
       transition: 'transform 0.4s ease, border-color 0.4s ease',
       overflow: 'hidden',
@@ -61,7 +61,7 @@ export const ServiceCard = ({ index, metaTag, icon, title, body, placeholder, de
             fontWeight: 500,
             letterSpacing: '0.04em',
             lineHeight: 1.4,
-            color: 'var(--fg-cream)',
+            color: 'var(--fg-deep)',
           }}
         >
           {title}
