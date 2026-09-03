@@ -42,7 +42,7 @@ export const TestimonialCard = ({ caseNum, attribute, quote, delay = 0 }: Props)
         userSelect: 'none',
       }}
     >
-      "
+      &ldquo;
     </span>
 
     {/* アバター + 属性 */}
