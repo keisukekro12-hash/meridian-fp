@@ -1,0 +1,1378 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#18171a">
+<style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
+<title>牛牛 配当計算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+</head>
+<body>
+<style>
+/* Layout: sticky header with three tabs (計算 / 戦績 / 早見表).
+   計算 — phone: ベット → 結果 → 計算書 in table order; wide: inputs left, sticky result right.
+   戦績 — day picker, summary row, 増減グラフ, 罫線, hand list.
+   Deliberately dark only: it mirrors the charcoal board with chalk-white boxes and coral lettering. */
+:root {
+  --felt: #18171a;
+  --felt-2: #222024;
+  --board: #2a282c;
+  --board-2: #333036;
+  --line: #45414a;
+  --chalk: #f3eee6;
+  --muted: #a8a19a;
+  --faint: #6f6a66;
+  --coral: #f2715b;
+  --coral-ink: #2a0f0a;
+  --win: #95d65a;
+  --win-ink: #13240a;
+  --warn: #f2b84b;
+  --display: "Dela Gothic One", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 14px;
+  color-scheme: dark;
+}
+html { background: var(--felt); }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: radial-gradient(120% 60% at 50% 0%, var(--felt-2), var(--felt) 70%) fixed, var(--felt);
+  color: var(--chalk); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 56px;
+  -webkit-tap-highlight-color: transparent;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--felt); }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; }
+.num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: .7rem; letter-spacing: .16em; color: var(--muted); font-weight: 500; }
+.pos { color: var(--win); }
+.neg { color: var(--coral); }
+
+.page { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+
+/* header + tabs */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8; background: var(--felt);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap;
+  padding-block: 14px 10px; border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.7rem; line-height: 1; color: var(--coral); letter-spacing: .1em; }
+.brand span { font-weight: 700; font-size: .85rem; }
+.tabs { display: flex; gap: 4px; background: var(--felt-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; }
+.tabs a {
+  color: var(--muted); text-decoration: none; padding: 6px 14px; border-radius: 9px; font-weight: 700; font-size: .88rem;
+  display: flex; align-items: center; gap: 6px;
+}
+.tabs a[aria-current="page"] { background: var(--chalk); color: var(--felt); }
+.tabs a .badge { font-family: var(--num); font-size: .7rem; font-weight: 600; }
+.tabs a[aria-current="page"] .badge { color: inherit; }
+.view { display: flex; flex-direction: column; gap: 22px; }
+.rules { font-size: .78rem; color: var(--muted); margin: 0; }
+
+.app { display: grid; gap: 22px; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 860px) { .app { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 28px; } .side { position: sticky; top: 84px; } }
+.col { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.block { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.blockhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.textbtn { background: none; border: 0; padding: 4px 0; color: var(--muted); font-size: .8rem; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- bet board ---- */
+.board { background: var(--board); border-radius: 18px; padding: 8px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 10px 30px rgba(0,0,0,.35); }
+.spot {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px;
+  border: 2px solid var(--line); border-radius: var(--r); padding: 12px 12px 12px 14px; background: var(--felt-2);
+  transition: border-color .15s;
+}
+.spot.on { border-color: var(--chalk); }
+.spot .name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.spot .tier { font-size: .7rem; color: var(--muted); letter-spacing: .14em; }
+.spot h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.15rem; letter-spacing: .04em; line-height: 1.2; }
+.spot .rule { font-size: .78rem; color: var(--muted); }
+.spot .rule b { color: var(--chalk); font-weight: 700; }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.chip {
+  --c: #5c6b5a;
+  width: 40px; height: 40px; border-radius: 50%; flex: none; border: 0; padding: 0;
+  background:
+    radial-gradient(circle, var(--c) 0 52%, transparent 53%),
+    repeating-conic-gradient(var(--c) 0 22.5deg, var(--chalk) 22.5deg 45deg);
+  box-shadow: 0 0 0 2px var(--c), 0 3px 0 rgba(0,0,0,.45);
+  color: var(--chalk); font-family: var(--num); font-weight: 600; font-size: 1.15rem; line-height: 1;
+  display: grid; place-items: center;
+}
+.chip:active { transform: translateY(2px); box-shadow: 0 0 0 2px var(--c), 0 1px 0 rgba(0,0,0,.45); }
+.chip.minus { --c: #4a4650; }
+.chip:disabled { opacity: .35; cursor: default; }
+.betin {
+  width: 5.6em; min-width: 0; text-align: center; font-family: var(--num); font-variant-numeric: tabular-nums;
+  font-size: 1.35rem; font-weight: 600; background: transparent; border: 0; border-bottom: 2px solid var(--line);
+  padding: 4px 2px; border-radius: 0;
+}
+.betin::placeholder { color: var(--faint); }
+.betin::-webkit-outer-spin-button, .betin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.betin { -moz-appearance: textfield; }
+.spot .meta { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: .75rem; color: var(--faint); }
+.spot .meta .quick { display: flex; gap: 12px; }
+.spot .meta button { background: none; border: 0; padding: 2px 0; color: var(--muted); font-size: .75rem; letter-spacing: .06em; }
+.spot .meta .warn { color: var(--warn); }
+
+.recents { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.recents button {
+  flex: none; border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px;
+  font-size: .78rem; color: var(--muted); white-space: nowrap;
+}
+.recents button[aria-pressed="true"] { border-color: var(--chalk); color: var(--chalk); }
+
+/* ---- outcome ---- */
+.wl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.wl button {
+  border: 2px solid var(--line); background: var(--felt-2); border-radius: var(--r); padding: 12px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.wl b { font-family: var(--display); font-weight: 400; font-size: 1.25rem; letter-spacing: .1em; }
+.wl small { font-size: .72rem; color: var(--muted); }
+.wl [data-o="win"][aria-pressed="true"] { background: var(--win); border-color: var(--win); color: var(--win-ink); }
+.wl [data-o="lose"][aria-pressed="true"] { background: var(--coral); border-color: var(--coral); color: var(--coral-ink); }
+.wl [aria-pressed="true"] small { color: inherit; opacity: .75; }
+
+.pts { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.pts button, .pts .sp {
+  border: 1px solid var(--line); background: var(--felt-2); border-radius: 10px; height: 50px;
+  font-family: var(--num); font-size: 1.25rem; font-weight: 600; min-width: 0;
+}
+.pts .niu { grid-column: span 2; font-family: var(--display); font-weight: 400; font-size: 1.15rem; letter-spacing: .08em; }
+.pts .sp { text-align: center; font-size: 1rem; padding: 0; width: 100%; }
+.pts .sp::placeholder { color: var(--faint); font-size: .85rem; font-family: var(--body); }
+.pts [aria-pressed="true"], .pts .sp.on { background: var(--chalk); color: var(--felt); border-color: var(--chalk); }
+.pts button { position: relative; }
+.pts button::after { content: attr(data-x); position: absolute; right: 5px; bottom: 2px; font-family: var(--num); font-size: .6rem; font-weight: 500; letter-spacing: 0; color: var(--faint); }
+.pts button[aria-pressed="true"]::after { color: var(--felt); opacity: .6; }
+.ptsnote { font-size: .72rem; color: var(--faint); margin: 0; }
+
+/* ---- result ---- */
+.result {
+  border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 14px;
+  background: var(--board); border: 2px solid var(--tone, var(--win));
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.result[data-o="win"] { --tone: var(--win); --tone-ink: var(--win-ink); }
+.result[data-o="lose"] { --tone: var(--coral); --tone-ink: var(--coral-ink); }
+.hero { display: flex; flex-direction: column; gap: 2px; }
+.hero .what { font-size: .82rem; color: var(--muted); }
+.hero .what b { color: var(--chalk); }
+.hero .big {
+  font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--tone);
+  font-size: clamp(2.6rem, 11vw, 3.6rem); line-height: 1.05; letter-spacing: -.02em; overflow-wrap: anywhere;
+}
+.hero .sub { font-size: .82rem; color: var(--muted); }
+.hero .sub .num { color: var(--chalk); }
+
+.receipt { display: flex; flex-direction: column; border-top: 1px dashed var(--line); padding-top: 10px; }
+.receipt .row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 12px; align-items: baseline; padding: 5px 0; font-size: .88rem; }
+.receipt .row .l { min-width: 0; }
+.receipt .row .l small { color: var(--faint); margin-left: 4px; }
+.receipt .row .f { color: var(--muted); font-family: var(--num); font-size: .8rem; text-align: right; }
+.receipt .row .v { font-family: var(--num); font-variant-numeric: tabular-nums; text-align: right; min-width: 5.5ch; }
+.receipt .row.dim { color: var(--faint); }
+.receipt .row.dim .v, .receipt .row.dim .f { color: var(--faint); }
+.receipt .row.sum { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 9px; font-weight: 700; }
+.receipt .row.rake .v { color: var(--coral); }
+.receipt .row.rake .l small { display: block; margin: 0; }
+.receipt .row.total { font-weight: 700; font-size: 1rem; }
+.receipt .row.total .v { color: var(--tone); }
+.flag { font-size: .78rem; padding: 8px 10px; border-radius: 10px; background: var(--felt-2); color: var(--muted); }
+.flag.warn { color: var(--warn); }
+
+.recordbar { display: flex; gap: 8px; align-items: stretch; }
+.record {
+  flex: 1; border: 0; border-radius: 12px; padding: 13px 14px; background: var(--tone); color: var(--tone-ink);
+  font-weight: 700; font-size: 1rem; letter-spacing: .04em;
+}
+.record:disabled { opacity: .35; cursor: default; }
+.today {
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 0; padding: 4px 12px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--felt-2); text-decoration: none; color: var(--chalk); min-width: 0;
+}
+.today small { font-size: .68rem; color: var(--muted); letter-spacing: .08em; }
+.today b { font-family: var(--num); font-size: 1rem; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 20;
+  background: var(--chalk); color: var(--felt); border-radius: 12px; padding: 10px 10px 10px 16px;
+  display: flex; align-items: center; gap: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.5); font-weight: 500; font-size: .9rem;
+  max-width: calc(100vw - 32px);
+}
+.toast button { border: 0; background: var(--felt); color: var(--chalk); border-radius: 8px; padding: 6px 12px; font-weight: 700; font-size: .82rem; }
+
+/* ---- 戦績 ---- */
+.days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.days button {
+  flex: none; border: 1px solid var(--line); background: var(--felt-2); border-radius: 12px; padding: 7px 12px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-align: left; min-width: 88px;
+}
+.days button small { font-size: .7rem; color: var(--muted); }
+.days button b { font-family: var(--num); font-size: .9rem; font-weight: 600; }
+.days button[aria-pressed="true"] { border-color: var(--chalk); background: var(--board-2); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 560px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { background: var(--board); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat .k { font-size: .7rem; color: var(--muted); letter-spacing: .1em; }
+.stat .v { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 1.35rem; line-height: 1.2; overflow-wrap: anywhere; }
+.stat .s { font-size: .72rem; color: var(--faint); font-family: var(--num); }
+.stat.lead .v { font-size: 1.7rem; }
+
+.panel { background: var(--board); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.panel h3 { margin: 0; font-size: .95rem; font-weight: 700; }
+.panelhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; width: 100%; height: 240px; overflow: visible; touch-action: pan-y; }
+.chart .tip {
+  position: absolute; top: 0; pointer-events: none; background: var(--felt); border: 1px solid var(--line); border-radius: 10px;
+  padding: 7px 10px; font-size: .78rem; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,.45); line-height: 1.45;
+}
+.chart .tip b { font-family: var(--num); }
+.legendnote { font-size: .72rem; color: var(--faint); margin: 0; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: .8rem; }
+.seg button[aria-pressed="true"] { background: var(--chalk); color: var(--felt); font-weight: 700; }
+
+.road { overflow-x: auto; padding-bottom: 4px; position: relative; }
+.roadgrid {
+  --cell: 30px;
+  display: grid; grid-auto-flow: column; grid-template-rows: repeat(6, var(--cell)); grid-auto-columns: var(--cell);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); width: max-content; min-width: 100%;
+}
+.bead {
+  width: calc(var(--cell) - 6px); height: calc(var(--cell) - 6px); margin: 3px; border-radius: 50%;
+  display: grid; place-items: center; font-family: var(--num); font-size: .72rem; font-weight: 600; line-height: 1;
+}
+.bead.w { border: 2.5px solid var(--win); color: var(--win); }
+.bead.l { background: var(--coral); color: var(--coral-ink); }
+.bead.niu { font-family: var(--display); font-weight: 400; font-size: .62rem; }
+.bead.last { box-shadow: 0 0 0 2px var(--felt), 0 0 0 4px var(--chalk); }
+.roadkey { display: flex; gap: 14px; flex-wrap: wrap; font-size: .75rem; color: var(--muted); align-items: center; }
+.roadkey .bead { --cell: 22px; margin: 0; display: inline-grid; vertical-align: middle; margin-right: 4px; font-size: .55rem; }
+.streaks { font-size: .78rem; color: var(--muted); }
+.streaks b { font-family: var(--num); color: var(--chalk); }
+
+.hands { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.hands th { font-weight: 500; font-size: .7rem; letter-spacing: .08em; color: var(--muted); text-align: right; padding: 0 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.hands td { padding: 7px 6px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--felt-2); font-family: var(--num); font-variant-numeric: tabular-nums; }
+.hands th:first-child, .hands td:first-child { text-align: left; padding-left: 0; }
+.hands td.res { font-family: var(--body); font-weight: 700; text-align: center; }
+.hands td.bets { font-family: var(--body); font-size: .75rem; color: var(--muted); text-align: left; }
+.hands td.t { color: var(--faint); font-size: .75rem; }
+.hands td.x { padding-right: 0; }
+.hands td.x button { border: 0; background: none; color: var(--faint); font-size: .75rem; padding: 2px 4px; border-radius: 6px; }
+.hands td.x button.arm { background: var(--coral); color: var(--coral-ink); font-weight: 700; }
+.empty { color: var(--muted); font-size: .88rem; padding: 22px 18px; border: 1px dashed var(--line); border-radius: 14px; display: flex; flex-direction: column; gap: 6px; }
+.empty b { color: var(--chalk); }
+.storenote { font-size: .75rem; color: var(--faint); margin: 0; }
+.danger { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 7px 14px; font-size: .8rem; }
+.danger.arm { border-color: var(--coral); background: var(--coral); color: var(--coral-ink); font-weight: 700; }
+
+/* ---- quick reference ---- */
+.refhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.refhead h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.4rem; letter-spacing: .06em; }
+.refhead p { margin: 4px 0 0; font-size: .8rem; color: var(--muted); max-width: 60ch; }
+.btn { border: 1px solid var(--chalk); background: var(--chalk); color: var(--felt); border-radius: 999px; padding: 9px 16px; font-weight: 700; font-size: .85rem; }
+.cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+.card { background: var(--board); border: 2px solid transparent; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card.current { border-color: var(--chalk); }
+.card .ch { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.card .bets { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.card .bets span { font-size: .78rem; border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; white-space: nowrap; }
+.card .bets span b { font-family: var(--num); font-weight: 600; margin-left: 4px; }
+.card .acts { display: flex; gap: 2px; flex: none; }
+.card .acts button { background: none; border: 0; color: var(--muted); font-size: .78rem; padding: 4px 6px; }
+.card .acts button:hover { color: var(--chalk); }
+.scroll { overflow-x: auto; }
+.ref table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+.ref th { font-weight: 500; font-size: .7rem; letter-spacing: .1em; color: var(--muted); text-align: right; padding: 0 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.ref th:first-child, .ref td:first-child { text-align: left; padding-left: 0; }
+.ref td { padding: 5px 6px; text-align: right; white-space: nowrap; font-family: var(--num); font-variant-numeric: tabular-nums; }
+.ref td:first-child { font-family: var(--body); color: var(--muted); }
+.ref td.w { color: var(--win); font-weight: 600; }
+.ref td.w small { display: block; color: var(--coral); font-weight: 500; font-size: .7rem; line-height: 1.1; }
+.ref td.l { color: var(--coral); font-weight: 600; }
+.ref tbody tr:nth-child(6) td, .ref tbody tr:nth-child(9) td { border-bottom: 1px solid var(--line); }
+.ref tr.hit td { background: var(--board-2); }
+.ref tr.hit td:first-child { color: var(--chalk); font-weight: 700; }
+
+details.settings { font-size: .82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+details.settings summary { cursor: pointer; }
+details.settings .seg { margin-top: 8px; }
+.settings p { margin: 8px 0 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  button { transition: background-color .12s, color .12s, border-color .12s; }
+  .bump { animation: bump .22s ease-out; }
+  @keyframes bump { from { transform: scale(.97); opacity: .6; } to { transform: none; opacity: 1; } }
+}
+/* ---- players / undo / edit ---- */
+.who { display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.pchips { display: flex; gap: 6px; flex-wrap: wrap; }
+.pchip {
+  --pc: var(--muted);
+  border: 1px solid var(--line); background: var(--felt-2); border-radius: 999px; padding: 6px 12px 6px 9px;
+  display: inline-flex; align-items: center; gap: 7px; font-size: .85rem; font-weight: 500; max-width: 100%;
+}
+.pchip i { width: 10px; height: 10px; border-radius: 50%; background: var(--pc); flex: none; }
+.pchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pchip b { font-family: var(--num); font-weight: 600; font-size: .78rem; }
+.pchip[aria-pressed="true"] { border-color: var(--pc); background: var(--board-2); box-shadow: inset 0 0 0 1px var(--pc); font-weight: 700; }
+.pchip.add { color: var(--muted); padding-left: 12px; }
+.pchips.filter { margin-top: -8px; }
+.undobar { display: flex; gap: 8px; flex-wrap: wrap; }
+.undobar:empty { display: none; }
+.undobar button {
+  flex: 1 1 140px; min-width: 0; border: 1px solid var(--line); background: var(--felt-2); border-radius: 12px; padding: 8px 12px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-align: left;
+}
+.undobar button b { font-size: .85rem; }
+.undobar button small { font-size: .72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.undobar button:disabled { opacity: .4; cursor: default; }
+.ghostbtn { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: .8rem; color: var(--chalk); }
+.ghostbtn:disabled { opacity: .4; cursor: default; }
+.roster { display: flex; flex-direction: column; gap: 6px; }
+.roster .rp { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--felt-2); }
+.roster .rp i { width: 12px; height: 12px; border-radius: 50%; background: var(--pc); }
+.roster input { background: transparent; border: 0; border-bottom: 1px dashed var(--line); padding: 4px 2px; font-size: .95rem; font-weight: 700; min-width: 0; border-radius: 0; }
+.roster .cnt { font-size: .75rem; color: var(--faint); font-family: var(--num); }
+.roster button { border: 0; background: none; color: var(--muted); font-size: .78rem; padding: 4px 6px; }
+.roster button:disabled { color: var(--faint); opacity: .5; cursor: default; }
+.summary { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.summary th { font-weight: 500; font-size: .7rem; letter-spacing: .08em; color: var(--muted); text-align: right; padding: 0 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.summary td { padding: 8px 6px; text-align: right; font-family: var(--num); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--felt-2); white-space: nowrap; }
+.summary th:first-child, .summary td:first-child { text-align: left; padding-left: 0; }
+.summary td.nm { font-family: var(--body); font-weight: 700; }
+.summary td.nm i, .hands td.pl i, .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--pc); margin-right: 6px; vertical-align: 0; }
+.summary td.big { font-size: 1.05rem; font-weight: 600; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .8rem; }
+.roadlabel { font-size: .8rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.roadlabel i { width: 10px; height: 10px; border-radius: 50%; background: var(--pc); }
+.roadlabel small { font-weight: 400; color: var(--muted); }
+.hands td.pl { font-family: var(--body); font-size: .78rem; text-align: left; max-width: 7em; overflow: hidden; text-overflow: ellipsis; }
+.hands tbody tr.hrow { cursor: pointer; }
+.hands tbody tr.hrow:hover td { background: var(--felt-2); }
+.hands tbody tr.open td { background: var(--board-2); }
+.hands tr.editor td { background: var(--board-2); padding: 10px 0 14px; white-space: normal; text-align: left; font-family: var(--body); }
+.editbox { display: flex; flex-direction: column; gap: 10px; padding: 0 10px; }
+.editbox .er { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.editbox .er > span { font-size: .72rem; color: var(--muted); width: 3.5em; flex: none; }
+.editbox .mini { display: flex; gap: 4px; flex-wrap: wrap; }
+.editbox .mini button { border: 1px solid var(--line); background: var(--felt); border-radius: 8px; min-width: 34px; padding: 5px 8px; font-family: var(--num); font-size: .85rem; }
+.editbox .mini button[aria-pressed="true"] { background: var(--chalk); color: var(--felt); border-color: var(--chalk); font-weight: 700; }
+.editbox .mini .pchip { padding: 4px 10px 4px 8px; font-family: var(--body); }
+.editbox .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.editbox .foot .amt { font-family: var(--num); font-weight: 600; }
+.delbtn { border: 1px solid var(--coral); background: transparent; color: var(--coral); border-radius: 999px; padding: 6px 14px; font-size: .8rem; font-weight: 700; }
+.hands td.x { color: var(--faint); font-size: .8rem; }
+
+.sync { font-size: .75rem; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.sync::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.sync.ok::before { background: var(--win); }
+.sync.warn { color: var(--warn); }
+.sync.warn::before { background: var(--warn); }
+.linkrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.linkrow input { flex: 1 1 200px; min-width: 0; background: var(--felt); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-family: var(--num); font-size: .8rem; color: var(--chalk); }
+textarea { width: 100%; box-sizing: border-box; background: var(--felt); color: var(--chalk); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-family: var(--num); font-size: .75rem; margin: 8px 0; }
+details.settings summary { color: var(--chalk); }
+
+@media (max-width: 380px) { .chip { width: 36px; height: 36px; } .betin { width: 4.6em; font-size: 1.2rem; } .tabs a { padding: 6px 10px; } }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div class="brand"><h1>NIU NIU</h1><span>配当計算</span></div>
+    <nav class="tabs" aria-label="画面">
+      <a href="#calc" data-view="calc">計算</a>
+      <a href="#log" data-view="log">戦績 <span class="badge" id="tabBadge"></span></a>
+      <a href="#table" data-view="table">早見表</a>
+    </nav>
+  </header>
+
+  <!-- ================= 計算 ================= -->
+  <section class="view" id="view-calc">
+    <p class="rules">勝ち：配当が3,000以上ならレーキ10%（10の位以下切り捨て）　負け：レーキなし</p>
+    <div class="app">
+      <div class="col">
+        <section class="block" aria-labelledby="betLabel">
+          <div class="blockhead"><span class="eyebrow" id="betLabel">ベット</span><button type="button" class="textbtn" id="clearAll">全部クリア</button></div>
+          <div class="board" id="board"></div>
+          <div class="recents" id="recents" aria-label="早見表のベットを読み込む"></div>
+        </section>
+
+        <section class="block" aria-labelledby="outLabel">
+          <span class="eyebrow" id="outLabel">結果</span>
+          <div class="wl" id="wl">
+            <button type="button" data-o="win"><b>勝ち</b><small>受け取る</small></button>
+            <button type="button" data-o="lose"><b>負け</b><small>支払う</small></button>
+          </div>
+          <div class="pts" id="pts"></div>
+          <p class="ptsnote">ボタン右下の小さい数字は中段（翻倍）の倍率です</p>
+        </section>
+      </div>
+
+      <div class="col side">
+        <section class="result" id="result" aria-live="polite">
+          <div class="hero">
+            <span class="what" id="what"></span>
+            <span class="big" id="big">0</span>
+            <span class="sub" id="sub"></span>
+          </div>
+          <div class="receipt" id="receipt"></div>
+          <div id="flags"></div>
+          <div class="who">
+            <span class="eyebrow">記録先</span>
+            <div class="pchips" id="whoChips"></div>
+          </div>
+          <div class="recordbar">
+            <button type="button" class="record" id="recordBtn">この結果を記録</button>
+            <a class="today" href="#log" id="todayLink"><small>今日</small><b id="todayNet">0</b></a>
+          </div>
+          <div class="undobar" id="undoCalc"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 戦績 ================= -->
+  <section class="view" id="view-log" hidden>
+    <div class="undobar" id="undoLog"></div>
+    <div class="days" id="days" aria-label="日付を選ぶ"></div>
+    <div class="pchips filter" id="playerFilter" aria-label="誰の戦績を見るか"></div>
+    <div id="logBody"></div>
+    <section class="panel">
+      <div class="panelhead"><h3>メンバー</h3><button type="button" class="ghostbtn" id="addPlayer">＋ 戦績を追加</button></div>
+      <div class="roster" id="roster"></div>
+      <p class="legendnote">名前を押すと変えられます。記録がある戦績は消せません（先に履歴から記録を消してください）。最大6つまで。</p>
+    </section>
+    <section class="panel">
+      <div class="panelhead"><h3>この卓のリンク</h3><span class="sync" id="syncState">接続中…</span></div>
+      <div class="linkrow"><input type="text" id="tableUrl" readonly aria-label="この卓のリンク"><button type="button" class="ghostbtn" id="copyLink">コピー</button></div>
+      <p class="legendnote">このリンクを知っている人は、ログインなしで同じ戦績を見て記録できます。LINEなどで送ってください。知らない人には教えないでください。</p>
+      <details class="settings">
+        <summary>ほかの記録を読み込む</summary>
+        <p>Claudeのページの「記録を書き出す」でコピーした文字を貼り付けてください。同じ手が二重に入ることはありません。</p>
+        <textarea id="importText" rows="4" aria-label="書き出した記録"></textarea>
+        <div class="linkrow"><button type="button" class="ghostbtn" id="importBtn">読み込む</button><span class="legendnote" id="importMsg"></span></div>
+      </details>
+      <details class="settings">
+        <summary>新しい卓を作る</summary>
+        <p>今の戦績はこのリンクに残ったまま、空の新しい卓に移ります。</p>
+        <button type="button" class="ghostbtn" id="newTable">新しい卓を作る</button>
+      </details>
+    </section>
+    <p class="storenote" id="storeNote"></p>
+  </section>
+
+  <!-- ================= 早見表 ================= -->
+  <section class="view ref" id="view-table" hidden>
+    <div class="refhead">
+      <div>
+        <h2>配当早見表</h2>
+        <p>勝ちはレーキを引いた受け取り額、負けは支払い額です。計算画面で選んでいる点数の行に色が付きます。「使う」でそのベットを計算画面に読み込みます。</p>
+      </div>
+      <button type="button" class="btn" id="addPreset">＋ 今のベットを追加</button>
+    </div>
+    <div class="cards" id="cards"></div>
+    <details class="settings">
+      <summary>設定</summary>
+      <div>複数の段で勝ったときのレーキ</div>
+      <div class="seg" id="rakeMode">
+        <button type="button" data-mode="total">配当の合計で判定</button>
+        <button type="button" data-mode="each">段ごとに判定</button>
+      </div>
+      <p><button type="button" class="textbtn" id="resetPresets">定番の早見表に戻す</button></p>
+    </details>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button type="button" id="toastUndo">取り消す</button></div>
+
+<script>
+/* ============ rules ============ */
+const SECTIONS = [
+  { key: "top", tier: "上段", name: "究極牛牛", rule: "<b>× 点数</b>", min: 100, max: 500 },
+  { key: "mid", tier: "中段", name: "翻倍", rule: "1-6点<b>×1</b> 7-9点<b>×2</b> 10点-<b>×3</b>", min: 100, max: 1000 },
+  { key: "bot", tier: "下段", name: "平倍", rule: "<b>× 1</b>", min: 300, max: 3000 },
+];
+const STEP = 100, RAKE_LINE = 3000, DAY_START_HOUR = 6, MAX_PLAYERS = 6;
+// player colors: validated categorical order (dark surface), fixed per player, never by rank
+const PCOL = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#9085e9"];
+const DEFAULT_PRESETS = [
+  { top: 500, mid: 0, bot: 0 },
+  { top: 100, mid: 100, bot: 300 },
+  { top: 0, mid: 1000, bot: 0 },
+  { top: 0, mid: 0, bot: 3000 },
+  { top: 500, mid: 1000, bot: 3000 },
+];
+const DEFAULT_PLAYERS = [{ id: "p1", name: "戦績1", c: 0 }];
+
+const mult = (key, p) => key === "top" ? p : key === "mid" ? (p <= 6 ? 1 : p <= 9 ? 2 : 3) : 1;
+// 3,000以上で10%、10の位以下切り捨て（3,000 → 300、4,500 → 450 → 400）
+const rakeOf = x => x >= RAKE_LINE ? Math.floor(x / 1000) * 100 : 0;
+const fmt = n => n.toLocaleString("ja-JP");
+const sfmt = n => (n > 0 ? "+" : n < 0 ? "−" : "±") + fmt(Math.abs(n));
+const sign = n => n > 0 ? "pos" : n < 0 ? "neg" : "";
+const ptsLabel = p => p === 10 ? "牛牛" : p > 10 ? `特殊${p}点` : `${p}点`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function settle(bets, p, outcome, mode) {
+  const win = outcome === "win";
+  const rows = SECTIONS.map(s => {
+    const bet = bets[s.key] || 0, m = mult(s.key, p), pay = bet * m;
+    return { ...s, bet, m, pay, rake: win && mode === "each" ? rakeOf(pay) : 0 };
+  });
+  const gross = rows.reduce((a, r) => a + r.pay, 0);
+  const rake = !win ? 0 : mode === "each" ? rows.reduce((a, r) => a + r.rake, 0) : rakeOf(gross);
+  const stake = rows.reduce((a, r) => a + r.bet, 0);
+  return { rows, gross, rake, net: gross - rake, stake };
+}
+// a recorded hand's amounts, recomputed from its bets / result / points
+function amounts(b, o, p, mode) {
+  const r = settle(b, p, o === "w" ? "win" : "lose", mode);
+  return { g: r.gross, r: r.rake, d: o === "w" ? r.net : -r.net };
+}
+
+/* ============ local storage helpers (per-device conveniences + fallback store) ============ */
+const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } };
+const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const PREF = "niuniu.prefs.v1", LOCAL_PRESETS = "niuniu.presets.v1", LOCAL_DAYS = "niuniu.days.v1", LOCAL_PLAYERS = "niuniu.players.v1";
+
+const prefs = read(PREF, {});
+const state = {
+  p: 9, outcome: "win",
+  bets: prefs.bets || { top: 500, mid: 0, bot: 0 },
+  mode: prefs.mode === "each" ? "each" : "total",
+  player: prefs.player || "p1",
+  view: "calc", day: null, road: "big", filter: "all", open: null,
+};
+const savePrefs = () => write(PREF, { bets: state.bets, mode: state.mode, player: state.player });
+const sameBets = (a, b) => SECTIONS.every(s => (a[s.key] || 0) === (b[s.key] || 0));
+const betText = x => SECTIONS.filter(s => x[s.key]).map(s => `${s.tier}${fmt(x[s.key])}`).join("・");
+
+/* ============ store: shared table (server) or this device ============ */
+// Everyone who opens the same link (?t=<卓ID>) shares one table on the server:
+//   hands   — one entry per hand { id, t, pl, o, p, b:{top,mid,bot}, g, r, d }
+//   players — one entry per member { id, name, c }
+// 早見表 and bet settings stay on each person's device.
+const randId = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), x => "abcdefghijkmnpqrstuvwxyz23456789"[x % 32]).join("");
+const TABLE = (() => {
+  const u = new URL(location.href);
+  let t = u.searchParams.get("t");
+  if (!/^[a-z0-9]{6,32}$/.test(t || "")) {
+    t = read("niuniu.table", null) || randId(10);
+    u.searchParams.set("t", t);
+    history.replaceState(null, "", u);
+  }
+  write("niuniu.table", t);
+  return t;
+})();
+const API = `/api/niuniu/${TABLE}`;
+const POLL_MS = 3000;
+
+const store = {
+  mode: "local", rev: -1, inflight: 0, problem: null,
+  days: read(LOCAL_DAYS, {}),
+  presets: (() => { const v = read(LOCAL_PRESETS, null); return Array.isArray(v) ? v : DEFAULT_PRESETS.map(x => ({ ...x })); })(),
+  players: (() => { const v = read(LOCAL_PLAYERS, null); return Array.isArray(v) && v.length ? v : DEFAULT_PLAYERS.map(x => ({ ...x })); })(),
+};
+
+const playerOf = id => store.players.find(x => x.id === id) || store.players[0];
+const plId = h => h.pl || "p1";
+const pcol = pl => PCOL[(pl && pl.c) || 0];
+const pdot = pl => `<i style="--pc:${pcol(pl)}"></i>`;
+const handId = h => h.id || "h" + h.t;
+
+function dayKeyOf(t) {
+  const d = new Date(t - DAY_START_HOUR * 3600e3);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+const localSave = () => { write(LOCAL_DAYS, store.days); write(LOCAL_PLAYERS, store.players); };
+const clean = h => { const x = { ...h, id: handId(h) }; delete x.k; return x; };
+
+// Writes go out in order; the next poll waits until they have all landed so it never shows stale data.
+let sendChain = Promise.resolve();
+function send(body) {
+  if (store.mode !== "cloud") { localSave(); return Promise.resolve(); }
+  store.inflight++;
+  const go = () => fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+    .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); });
+  sendChain = sendChain.then(() => go().catch(() => new Promise(r => setTimeout(r, 800)).then(go)))
+    .catch(() => showToast("保存できませんでした。通信を確認して、もう一度記録してください。"))
+    .finally(() => { store.inflight--; if (!store.inflight) pull(); });
+  return sendChain;
+}
+const savePresets = () => write(LOCAL_PRESETS, store.presets);
+const saveHand = h => send({ op: "putHand", hand: clean(h) });
+const deleteHand = h => send({ op: "delHand", id: handId(h) });
+const savePlayer = pl => send({ op: "putPlayer", player: { id: pl.id, name: pl.name, c: pl.c } });
+const deletePlayer = id => send({ op: "delPlayer", id });
+
+let pulling = false;
+async function pull() {
+  if (pulling || store.inflight) return;
+  pulling = true;
+  try {
+    const r = await fetch(`${API}?since=${store.rev}`, { cache: "no-store" });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { store.problem = j.error === "storage_not_configured" ? "setup" : "offline"; renderStatus(); return; }
+    store.problem = null;
+    if (j.same || store.inflight) { renderStatus(); return; }
+    const firstTime = store.mode !== "cloud";
+    store.mode = "cloud"; store.rev = j.rev;
+    const days = {};
+    Object.values(j.hands || {}).forEach(h => { const k = dayKeyOf(h.t); (days[k] = days[k] || []).push(h); });
+    Object.values(days).forEach(a => a.sort((x, y) => x.t - y.t));
+    store.days = days;
+    const list = Object.values(j.players || {}).sort((a, b) => a.c - b.c);
+    if (list.length) store.players = list;
+    if (firstTime) joinTable(!list.length);
+    renderAll();
+  } catch (e) {
+    store.problem = "offline"; renderStatus();
+  } finally { pulling = false; }
+}
+// first contact with the table: anything recorded on this device while offline joins it
+function joinTable(noPlayers) {
+  const local = read(LOCAL_DAYS, {});
+  const have = new Set(Object.values(store.days).flat().map(handId));
+  const add = Object.values(local).flat().filter(h => !have.has(handId(h))).map(clean);
+  if (add.length || noPlayers) send({ op: "import", hands: add, players: noPlayers ? store.players : [] });
+  write(LOCAL_DAYS, {});
+}
+function connect() {
+  pull();
+  setInterval(() => { if (document.visibilityState === "visible") pull(); }, POLL_MS);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pull(); });
+}
+
+function renderStatus() {
+  const el = document.getElementById("syncState");
+  if (!el) return;
+  const s = store.problem === "setup" ? ["warn", "保存先が未設定のため、この端末だけに記録しています"]
+    : store.problem === "offline" ? ["warn", "つながっていません。再接続を待っています"]
+    : store.mode === "cloud" ? ["ok", "この卓のメンバーと同期中"] : ["", "接続中…"];
+  el.className = "sync " + s[0]; el.textContent = s[1];
+}
+
+/* ============ import / table link ============ */
+function importRecords(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { return "読み込めませんでした。コピーした文字をそのまま貼り付けてください。"; }
+  const hands = Array.isArray(data.hands) ? data.hands : [];
+  const players = Array.isArray(data.players) ? data.players : [];
+  if (!hands.length && !players.length) return "記録が見つかりませんでした。";
+  if (store.mode !== "cloud") return "卓につながってから読み込んでください。";
+  // keep colors unique: an imported member whose color is already taken by someone else gets a free one
+  const used = new Map(store.players.map(p => [p.c, p.id]));
+  const merged = players.slice(0, MAX_PLAYERS).map(p => {
+    let c = p.c;
+    if (used.has(c) && used.get(c) !== p.id) c = [...PCOL.keys()].find(i => !used.has(i)) ?? c;
+    used.set(c, p.id);
+    return { id: p.id, name: p.name, c };
+  });
+  send({ op: "import", hands: hands.map(clean), players: merged });
+  return `${hands.length}手・${players.length}人分を読み込みました。`;
+}
+function tableLink() { const u = new URL(location.href); u.hash = ""; u.search = "?t=" + TABLE; return u.toString(); }
+
+function wireTablePanel() {
+  const url = document.getElementById("tableUrl");
+  url.value = tableLink();
+  document.getElementById("copyLink").addEventListener("click", () => {
+    navigator.clipboard.writeText(url.value).then(() => showToast("リンクをコピーしました"), () => { url.focus(); url.select(); });
+  });
+  document.getElementById("importBtn").addEventListener("click", () => {
+    const box = document.getElementById("importText");
+    document.getElementById("importMsg").textContent = importRecords(box.value);
+    box.value = "";
+  });
+  const nt = document.getElementById("newTable");
+  nt.addEventListener("click", () => {
+    if (!nt.classList.contains("arm")) { nt.classList.add("arm", "delbtn"); nt.textContent = "本当に新しい卓にする（もう一度押す）"; return; }
+    write("niuniu.table", null);
+    location.href = location.pathname + "?t=" + randId(10);
+  });
+}
+
+/* ============ edits with undo / redo ============ */
+// Every change to the record goes through do_(): it applies, saves, and lands on the undo stack.
+// The stack holds only this person's own operations, so 戻す never undoes a friend's entry.
+const undoStack = [], redoStack = [];
+function putHand(key, hand) {
+  store.days[key] = [...(store.days[key] || []).filter(h => handId(h) !== handId(hand)), hand].sort((a, b) => a.t - b.t);
+  saveHand(hand);
+}
+function dropHand(key, hand) {
+  store.days[key] = (store.days[key] || []).filter(h => handId(h) !== handId(hand));
+  if (!store.days[key].length) delete store.days[key];
+  deleteHand(hand);
+}
+function apply(op, back) {
+  const k = op.key;
+  if (op.t === "add") back ? dropHand(k, op.hand) : putHand(k, op.hand);
+  if (op.t === "del") back ? putHand(k, op.hand) : dropHand(k, op.hand);
+  if (op.t === "edit") putHand(k, back ? op.before : op.after);
+  if (op.t === "setday") {
+    const keep = new Set(op.after.map(handId));
+    op.before.filter(h => !keep.has(handId(h))).forEach(h => back ? putHand(k, h) : dropHand(k, h));
+  }
+}
+function do_(op) { apply(op, false); undoStack.push(op); if (undoStack.length > 100) undoStack.shift(); redoStack.length = 0; renderAll(); }
+function undo() { const op = undoStack.pop(); if (!op) return; apply(op, true); redoStack.push(op); showToast("戻しました：" + describe(op)); renderAll(); }
+function redo() { const op = redoStack.pop(); if (!op) return; apply(op, false); undoStack.push(op); showToast("やり直しました：" + describe(op)); renderAll(); }
+function handText(h) { return `${esc(playerOf(plId(h)).name)} ${h.o === "w" ? "勝" : "負"}${ptsLabel(h.p)} ${sfmt(h.d)}`; }
+function describe(op) {
+  if (op.t === "add") return "記録 " + handText(op.hand);
+  if (op.t === "del") return "削除 " + handText(op.hand);
+  if (op.t === "edit") return "修正 " + handText(op.after);
+  return `${fmtDay(op.key)}の${op.before.length - op.after.length}手を削除`;
+}
+
+function renderUndo() {
+  const html = undoStack.length || redoStack.length ? `
+    <button type="button" data-u="undo" ${undoStack.length ? "" : "disabled"}><b>↶ 1つ戻す</b><small>${undoStack.length ? describe(undoStack[undoStack.length - 1]) : "戻せる操作はありません"}</small></button>
+    <button type="button" data-u="redo" ${redoStack.length ? "" : "disabled"}><b>↷ やり直す</b><small>${redoStack.length ? describe(redoStack[redoStack.length - 1]) : "—"}</small></button>` : "";
+  ["undoCalc", "undoLog"].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = html;
+    el.querySelectorAll("[data-u]").forEach(b => b.addEventListener("click", () => b.dataset.u === "undo" ? undo() : redo()));
+  });
+}
+
+/* ============ recording ============ */
+function recordHand() {
+  const r = settle(state.bets, state.p, state.outcome, state.mode);
+  if (!r.stake) return;
+  const t = Date.now(), key = dayKeyOf(t), pl = playerOf(state.player);
+  const hand = { id: "h" + t + Math.random().toString(36).slice(2, 6), t, pl: pl.id, o: state.outcome === "win" ? "w" : "l", p: state.p, b: { top: state.bets.top || 0, mid: state.bets.mid || 0, bot: state.bets.bot || 0 } };
+  Object.assign(hand, amounts(hand.b, hand.o, hand.p, state.mode));
+  do_({ t: "add", key, hand });
+  const mine = (store.days[key] || []).filter(h => plId(h) === pl.id);
+  showToast(`${pl.name} 第${mine.length}手 ${sfmt(hand.d)}（今日 ${sfmt(mine.reduce((a, h) => a + h.d, 0))}）`, true);
+}
+
+let toastTimer;
+function showToast(msg, withUndo) {
+  const el = document.getElementById("toast");
+  document.getElementById("toastMsg").textContent = msg.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+  document.getElementById("toastUndo").hidden = !withUndo;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, withUndo ? 6000 : 3500);
+}
+document.getElementById("toastUndo").addEventListener("click", () => { document.getElementById("toast").hidden = true; undo(); });
+document.getElementById("recordBtn").addEventListener("click", recordHand);
+
+/* ============ players ============ */
+function addPlayer() {
+  if (store.players.length >= MAX_PLAYERS) return null;
+  const used = new Set(store.players.map(x => x.c));
+  const c = [...PCOL.keys()].find(i => !used.has(i));
+  let n = store.players.length + 1;
+  while (store.players.some(x => x.name === "戦績" + n)) n++;
+  const pl = { id: "p" + Date.now().toString(36), name: "戦績" + n, c };
+  store.players.push(pl); savePlayer(pl);
+  return pl;
+}
+function handsOfPlayer(id) { return Object.values(store.days).reduce((a, hs) => a + hs.filter(h => plId(h) === id).length, 0); }
+
+function renderWho() {
+  if (!store.players.some(x => x.id === state.player)) state.player = store.players[0].id;
+  const host = document.getElementById("whoChips");
+  host.innerHTML = store.players.map(pl => `<button type="button" class="pchip" style="--pc:${pcol(pl)}" data-id="${pl.id}" aria-pressed="${pl.id === state.player}">${pdot(pl)}<span>${esc(pl.name)}</span></button>`).join("")
+    + (store.players.length < MAX_PLAYERS ? `<button type="button" class="pchip add" id="whoAdd">＋ 追加</button>` : "");
+  host.querySelectorAll("[data-id]").forEach(b => b.addEventListener("click", () => { state.player = b.dataset.id; savePrefs(); renderCalc(); renderWho(); }));
+  const add = document.getElementById("whoAdd");
+  if (add) add.addEventListener("click", () => { const pl = addPlayer(); if (pl) { state.player = pl.id; savePrefs(); renderAll(); } });
+}
+
+let nameSaveT;
+function renderRoster() {
+  const host = document.getElementById("roster");
+  if (host.contains(document.activeElement)) return;   // don't rebuild under the name being typed
+  host.innerHTML = store.players.map(pl => {
+    const n = handsOfPlayer(pl.id);
+    return `<div class="rp" style="--pc:${pcol(pl)}"><i></i>
+      <input type="text" id="name-${pl.id}" value="${esc(pl.name)}" maxlength="12" aria-label="戦績の名前">
+      <span class="cnt">${n}手</span>
+      <button type="button" data-del="${pl.id}" ${n || store.players.length === 1 ? "disabled" : ""}>削除</button></div>`;
+  }).join("");
+  host.querySelectorAll("input").forEach(inp => {
+    const pl = playerOf(inp.id.slice(5));
+    // rename as you type (after IME conversion), save shortly after typing stops
+    const commit = () => {
+      const v = inp.value.trim();
+      if (!v || v === pl.name) return;
+      pl.name = v; renderAll();
+      clearTimeout(nameSaveT); nameSaveT = setTimeout(() => savePlayer(pl), 500);
+    };
+    inp.addEventListener("input", e => { if (!e.isComposing) commit(); });
+    inp.addEventListener("compositionend", commit);
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") inp.blur(); });
+    inp.addEventListener("blur", () => {
+      commit(); if (!inp.value.trim()) inp.value = pl.name;
+      clearTimeout(nameSaveT); savePlayer(pl); setTimeout(renderAll, 0);
+    });
+  });
+  host.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => {
+    store.players = store.players.filter(x => x.id !== b.dataset.del); deletePlayer(b.dataset.del);
+    if (state.filter === b.dataset.del) state.filter = "all";
+    renderAll();
+  }));
+  document.getElementById("addPlayer").disabled = store.players.length >= MAX_PLAYERS;
+}
+document.getElementById("addPlayer").addEventListener("click", () => { addPlayer(); renderAll(); });
+
+/* ============ views (hash) ============ */
+const VIEWS = ["calc", "log", "table"];
+function route() {
+  const v = location.hash.slice(1);
+  state.view = VIEWS.includes(v) ? v : "calc";
+  VIEWS.forEach(x => { document.getElementById("view-" + x).hidden = x !== state.view; });
+  document.querySelectorAll(".tabs a").forEach(a => a.removeAttribute("aria-current"));
+  document.querySelector(`.tabs a[data-view="${state.view}"]`).setAttribute("aria-current", "page");
+  if (state.view === "log") renderLog();
+  if (state.view === "table") renderCards();
+}
+window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
+
+/* ============ calculator UI ============ */
+const board = document.getElementById("board");
+SECTIONS.forEach(s => {
+  const el = document.createElement("div");
+  el.className = "spot"; el.id = "spot-" + s.key;
+  el.innerHTML = `
+    <div class="name"><span class="tier">${s.tier}</span><h2>${s.name}</h2><span class="rule">${s.rule}</span></div>
+    <div class="stepper">
+      <button type="button" class="chip minus" data-d="-1" aria-label="${s.tier}を${STEP}減らす">−</button>
+      <input class="betin" id="bet-${s.key}" type="number" inputmode="numeric" min="0" step="${STEP}" placeholder="0" aria-label="${s.tier} ${s.name}のベット">
+      <button type="button" class="chip" data-d="1" aria-label="${s.tier}を${STEP}増やす">＋</button>
+    </div>
+    <div class="meta">
+      <span class="lim num">min ${fmt(s.min)} / max ${fmt(s.max)}</span>
+      <span class="quick"><button type="button" data-v="${s.min}">MIN</button><button type="button" data-v="${s.max}">MAX</button><button type="button" data-v="0">0</button></span>
+    </div>`;
+  const input = el.querySelector("input");
+  const set = v => { state.bets[s.key] = Math.max(0, v); savePrefs(); renderCalc(); };
+  input.addEventListener("input", () => { state.bets[s.key] = Math.max(0, parseInt(input.value, 10) || 0); savePrefs(); renderCalc(false); });
+  input.addEventListener("focus", () => input.select());
+  el.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => {
+    const cur = state.bets[s.key] || 0, d = +b.dataset.d;
+    let v = cur + d * STEP;
+    if (d > 0 && cur < s.min) v = s.min;               // 0 から押したら最低額へ
+    if (d < 0 && cur <= s.min) v = 0;
+    set(Math.min(v, Math.max(s.max, cur)));
+  }));
+  el.querySelectorAll("[data-v]").forEach(b => b.addEventListener("click", () => set(+b.dataset.v)));
+  board.appendChild(el);
+});
+document.getElementById("clearAll").addEventListener("click", () => {
+  SECTIONS.forEach(s => state.bets[s.key] = 0); savePrefs(); renderCalc();
+});
+
+document.querySelectorAll("#wl button").forEach(b => b.addEventListener("click", () => { state.outcome = b.dataset.o; renderCalc(); }));
+const pts = document.getElementById("pts");
+for (let p = 1; p <= 10; p++) {
+  const b = document.createElement("button");
+  b.type = "button"; b.dataset.p = p;
+  b.textContent = p === 10 ? "牛牛" : p;
+  if (p === 10) b.className = "niu";
+  b.dataset.x = "×" + mult("mid", p);
+  b.setAttribute("aria-label", ptsLabel(p));
+  b.addEventListener("click", () => { state.p = p; sp.value = ""; renderCalc(); });
+  pts.appendChild(b);
+}
+const sp = document.createElement("input");
+sp.className = "sp"; sp.id = "ptsSpecial"; sp.type = "number"; sp.inputMode = "numeric"; sp.min = 11;
+sp.placeholder = "11+"; sp.setAttribute("aria-label", "特殊役の点数（11点以上）");
+sp.addEventListener("input", () => { const v = parseInt(sp.value, 10); if (v >= 11) { state.p = v; renderCalc(); } });
+pts.appendChild(sp);
+
+document.querySelectorAll("#rakeMode button").forEach(b => b.addEventListener("click", () => {
+  state.mode = b.dataset.mode; savePrefs(); renderAll();
+}));
+document.getElementById("addPreset").addEventListener("click", () => {
+  const x = { top: state.bets.top || 0, mid: state.bets.mid || 0, bot: state.bets.bot || 0 };
+  if (!x.top && !x.mid && !x.bot) return;
+  if (!store.presets.some(y => sameBets(x, y))) { store.presets.unshift(x); savePresets(); }
+  renderAll();
+});
+document.getElementById("resetPresets").addEventListener("click", () => {
+  store.presets = DEFAULT_PRESETS.map(x => ({ ...x })); savePresets(); renderAll();
+});
+
+const bump = el => { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); };
+let lastKey = "";
+
+function renderCalc(syncInputs = true) {
+  const win = state.outcome === "win";
+  const r = settle(state.bets, state.p, state.outcome, state.mode);
+
+  r.rows.forEach(row => {
+    const el = document.getElementById("spot-" + row.key);
+    const input = el.querySelector("input");
+    if (syncInputs) input.value = row.bet || "";
+    el.classList.toggle("on", row.bet > 0);
+    el.querySelector('[data-d="-1"]').disabled = !row.bet;
+    const lim = el.querySelector(".lim");
+    const bad = row.bet && (row.bet < row.min || row.bet > row.max);
+    lim.classList.toggle("warn", !!bad);
+    lim.textContent = bad ? `範囲外です（${fmt(row.min)}〜${fmt(row.max)}）` : `min ${fmt(row.min)} / max ${fmt(row.max)}`;
+  });
+
+  document.querySelectorAll("#wl button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.o === state.outcome)));
+  pts.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.p === state.p)));
+  sp.classList.toggle("on", state.p > 10);
+  document.querySelectorAll("#rakeMode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode)));
+
+  document.getElementById("result").dataset.o = state.outcome;
+  document.getElementById("what").innerHTML = win
+    ? `<b>${ptsLabel(state.p)}</b> で勝ち・受け取り`
+    : `ディーラー <b>${ptsLabel(state.p)}</b> で負け・支払い`;
+  const big = document.getElementById("big");
+  big.textContent = r.stake ? (win ? "+" : "−") + fmt(r.net) : "0";
+  document.getElementById("sub").innerHTML = !r.stake ? "ベットを入れてください"
+    : win ? `ベット <span class="num">${fmt(r.stake)}</span> の戻りを足すと <span class="num">${fmt(r.stake + r.net)}</span>`
+          : `レーキはかかりません`;
+  const key = [state.outcome, state.p, r.net].join();
+  if (key !== lastKey) { bump(big); lastKey = key; }
+
+  let html = "";
+  r.rows.forEach(row => {
+    html += row.bet
+      ? `<div class="row"><span class="l">${row.tier} ${row.name}</span><span class="f">${fmt(row.bet)} × ${row.m}</span><span class="v">${fmt(row.pay)}</span></div>`
+      : `<div class="row dim"><span class="l">${row.tier} ${row.name}</span><span class="f">—</span><span class="v">0</span></div>`;
+  });
+  html += `<div class="row sum"><span class="l">${win ? "配当" : "支払い"}合計</span><span class="f"></span><span class="v">${fmt(r.gross)}</span></div>`;
+  if (win) {
+    const basis = state.mode === "each" ? "段ごと" : "合計";
+    html += r.rake
+      ? `<div class="row rake"><span class="l">レーキ 10%<small>3,000以上・10の位以下切り捨て（${basis}で判定）</small></span><span class="f"></span><span class="v">−${fmt(r.rake)}</span></div>`
+      : `<div class="row dim"><span class="l">レーキ<small>3,000未満なのでなし</small></span><span class="f"></span><span class="v">0</span></div>`;
+  }
+  html += `<div class="row total"><span class="l">${win ? "受け取り" : "支払い"}</span><span class="f"></span><span class="v">${fmt(r.net)}</span></div>`;
+  document.getElementById("receipt").innerHTML = html;
+
+  document.getElementById("flags").innerHTML = r.rows.some(row => row.bet && (row.bet < row.min || row.bet > row.max))
+    ? `<div class="flag warn">ボードの min / max から外れている段があります。</div>` : "";
+
+  const rec = document.getElementById("recordBtn");
+  rec.disabled = !r.stake;
+  rec.textContent = r.stake ? `${playerOf(state.player).name}に記録（${win ? "+" : "−"}${fmt(r.net)}）` : "この結果を記録";
+
+  renderRecents();
+  renderToday();
+}
+
+function renderToday() {
+  const today = (store.days[dayKeyOf(Date.now())] || []).filter(h => plId(h) === state.player);
+  const net = today.reduce((a, h) => a + h.d, 0);
+  const el = document.getElementById("todayNet");
+  el.textContent = today.length ? sfmt(net) : "—";
+  el.className = sign(net);
+  document.querySelector("#todayLink small").textContent = today.length ? `${playerOf(state.player).name} 今日${today.length}手` : "今日";
+  const all = (store.days[dayKeyOf(Date.now())] || []).length;
+  document.getElementById("tabBadge").textContent = all ? all : "";
+}
+
+function renderRecents() {
+  const host = document.getElementById("recents");
+  host.innerHTML = "";
+  store.presets.forEach(x => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = betText(x);
+    b.setAttribute("aria-pressed", String(sameBets(x, state.bets)));
+    b.addEventListener("click", () => { state.bets = { ...x }; savePrefs(); renderCalc(); });
+    host.appendChild(b);
+  });
+}
+
+function renderCards() {
+  const host = document.getElementById("cards");
+  host.innerHTML = "";
+  if (!store.presets.length) {
+    host.innerHTML = `<div class="empty">早見表は空です。計算画面でベットを入れてから「＋ 今のベットを追加」を押すと、ここに表ができます。</div>`;
+    return;
+  }
+  store.presets.forEach((x, i) => {
+    const card = document.createElement("article");
+    card.className = "card" + (sameBets(x, state.bets) ? " current" : "");
+    let rows = "";
+    for (let p = 1; p <= 10; p++) {
+      const w = settle(x, p, "win", state.mode), l = settle(x, p, "lose", state.mode);
+      rows += `<tr class="${p === state.p ? "hit" : ""}"><td>${ptsLabel(p)}</td>
+        <td class="w">${fmt(w.net)}${w.rake ? `<small>レーキ −${fmt(w.rake)}</small>` : ""}</td>
+        <td class="l">${fmt(l.net)}</td></tr>`;
+    }
+    card.innerHTML = `
+      <div class="ch">
+        <div class="bets">${SECTIONS.filter(s => x[s.key]).map(s => `<span>${s.tier} ${s.name}<b>${fmt(x[s.key])}</b></span>`).join("")}</div>
+        <div class="acts"><button type="button" data-a="use">使う</button><button type="button" data-a="del" aria-label="この早見表を削除">削除</button></div>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>役</th><th>勝ち 受け取り</th><th>負け 支払い</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+    card.querySelector('[data-a="use"]').addEventListener("click", () => {
+      state.bets = { ...x }; savePrefs(); renderCalc(); location.hash = "calc";
+    });
+    card.querySelector('[data-a="del"]').addEventListener("click", () => { store.presets.splice(i, 1); savePresets(); renderAll(); });
+    host.appendChild(card);
+  });
+}
+
+/* ============ 戦績 ============ */
+const fmtDay = k => { const [y, m, d] = k.split("-").map(Number); const w = "日月火水木金土"[new Date(y, m - 1, d).getDay()]; return `${m}/${d}（${w}）`; };
+const fmtTime = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
+const inFilter = h => state.filter === "all" || plId(h) === state.filter;
+
+function selectedHands() {
+  const keys = Object.keys(store.days).sort();
+  const pick = state.day === "all" ? keys : [state.day];
+  return pick.flatMap(k => (store.days[k] || []).map(h => ({ ...h, k }))).filter(inFilter);
+}
+
+function statsOf(hands) {
+  let cum = 0, peak = 0, trough = 0, wins = 0, bestW = 0, worstL = 0, run = 0, cur = null, longW = 0, longL = 0;
+  const series = [{ i: 0, c: 0 }];
+  hands.forEach((h, i) => {
+    cum += h.d; series.push({ i: i + 1, c: cum, h });
+    peak = Math.max(peak, cum); trough = Math.min(trough, cum);
+    if (h.o === "w") { wins++; bestW = Math.max(bestW, h.d); } else worstL = Math.min(worstL, h.d);
+    run = h.o === cur ? run + 1 : 1; cur = h.o;
+    if (h.o === "w") longW = Math.max(longW, run); else longL = Math.max(longL, run);
+  });
+  return { cum, peak, trough, wins, bestW, worstL, run, cur, longW, longL, series, n: hands.length,
+    rate: hands.length ? Math.round(wins / hands.length * 100) : 0, rake: hands.reduce((a, h) => a + (h.r || 0), 0) };
+}
+
+function renderLog() {
+  renderUndo();
+  renderRoster();
+  if (state.filter !== "all" && !store.players.some(x => x.id === state.filter)) state.filter = "all";
+  const multi = store.players.length > 1;
+  if (!multi) state.filter = "all";
+
+  const keys = Object.keys(store.days).sort().reverse();
+  const todayKey = dayKeyOf(Date.now());
+  if (!state.day || (state.day !== "all" && !store.days[state.day] && state.day !== todayKey)) state.day = keys.includes(todayKey) || !keys.length ? todayKey : keys[0];
+
+  // day picker (totals follow the player filter)
+  const dayNet = k => (store.days[k] || []).filter(inFilter).reduce((a, h) => a + h.d, 0);
+  const dayN = k => (store.days[k] || []).filter(inFilter).length;
+  const opts = [];
+  if (keys.length > 1) opts.push({ k: "all", label: `全期間 ${keys.length}日`, net: keys.reduce((a, k) => a + dayNet(k), 0) });
+  if (!keys.includes(todayKey)) opts.push({ k: todayKey, label: `${fmtDay(todayKey)} 今日`, net: null });
+  keys.forEach(k => opts.push({ k, label: fmtDay(k) + (k === todayKey ? " 今日" : ""), net: dayNet(k), n: dayN(k) }));
+  const daysEl = document.getElementById("days");
+  daysEl.innerHTML = opts.map(o => `<button type="button" data-k="${o.k}" aria-pressed="${o.k === state.day}">
+      <small>${o.label}${o.n ? `・${o.n}手` : ""}</small><b class="${o.net == null ? "" : sign(o.net)}">${o.net == null ? "—" : sfmt(o.net)}</b></button>`).join("");
+  daysEl.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { state.day = b.dataset.k; state.open = null; renderLog(); }));
+
+  // player filter
+  const pf = document.getElementById("playerFilter");
+  pf.hidden = !multi;
+  pf.innerHTML = multi ? `<button type="button" class="pchip" data-f="all" aria-pressed="${state.filter === "all"}"><span>全員</span></button>` +
+    store.players.map(pl => `<button type="button" class="pchip" style="--pc:${pcol(pl)}" data-f="${pl.id}" aria-pressed="${state.filter === pl.id}">${pdot(pl)}<span>${esc(pl.name)}</span></button>`).join("") : "";
+  pf.querySelectorAll("[data-f]").forEach(b => b.addEventListener("click", () => { state.filter = b.dataset.f; state.open = null; renderLog(); }));
+
+  document.getElementById("storeNote").textContent = "日付は朝6時で切り替わります。「1つ戻す」は自分がこの画面でした操作だけが対象です。早見表は各自の端末に保存されます。";
+
+  const hands = selectedHands();
+  const body = document.getElementById("logBody");
+  const who = state.filter === "all" ? "" : playerOf(state.filter).name + "の";
+  if (!hands.length) {
+    body.innerHTML = `<div class="empty"><b>${state.day === "all" ? "全期間" : state.day === todayKey ? "今日" : fmtDay(state.day)}の${who}記録はまだありません</b>
+      計算画面で記録先を選び、勝ち負けと点数を入れて「記録」を押すと、ここに増減グラフと罫線がたまっていきます。</div>`;
+    return;
+  }
+
+  const groups = (multi && state.filter === "all")
+    ? store.players.map(pl => ({ pl, hands: hands.filter(h => plId(h) === pl.id) })).filter(g => g.hands.length)
+    : [{ pl: playerOf(state.filter === "all" ? plId(hands[0]) : state.filter), hands }];
+  const compare = multi && state.filter === "all";
+
+  let top;
+  if (compare) {
+    const rows = groups.map(g => ({ g, s: statsOf(g.hands) }));
+    const tot = rows.reduce((a, r) => a + r.s.cum, 0);
+    top = `<section class="panel"><div class="panelhead"><h3>メンバー別</h3><span class="legendnote">合計 <b class="num ${sign(tot)}">${sfmt(tot)}</b></span></div>
+      <div class="scroll"><table class="summary"><thead><tr><th>戦績</th><th>収支</th><th>手数</th><th>勝率</th><th>最高 / 最低</th><th>連勝・連敗</th></tr></thead><tbody>
+      ${rows.map(({ g, s }) => `<tr><td class="nm" style="--pc:${pcol(g.pl)}">${pdot(g.pl)}${esc(g.pl.name)}</td><td class="big ${sign(s.cum)}">${sfmt(s.cum)}</td><td>${s.n}</td><td>${s.rate}%</td>
+        <td><span class="pos">${sfmt(s.peak)}</span> / <span class="neg">${sfmt(s.trough)}</span></td><td>${s.longW} / ${s.longL}</td></tr>`).join("")}
+      </tbody></table></div></section>`;
+  } else {
+    const s = statsOf(hands);
+    top = `<div class="stats">
+      <div class="stat lead"><span class="k">${multi ? esc(groups[0].pl.name) + " 収支" : "収支"}</span><span class="v ${sign(s.cum)}">${sfmt(s.cum)}</span><span class="s">最高 ${sfmt(s.peak)} / 最低 ${sfmt(s.trough)}</span></div>
+      <div class="stat"><span class="k">勝率</span><span class="v">${s.rate}%</span><span class="s">${s.wins}勝 ${s.n - s.wins}敗 / ${s.n}手</span></div>
+      <div class="stat"><span class="k">最大の勝ち / 負け</span><span class="v"><span class="pos">${s.bestW ? sfmt(s.bestW) : "—"}</span></span><span class="s neg">${s.worstL ? sfmt(s.worstL) : "—"}</span></div>
+      <div class="stat"><span class="k">払ったレーキ</span><span class="v">${fmt(s.rake)}</span><span class="s">最長連勝 ${s.longW} / 連敗 ${s.longL}</span></div>
+    </div>`;
+  }
+
+  body.innerHTML = `${top}
+    <section class="panel">
+      <div class="panelhead"><h3>チップ増減</h3>${compare
+        ? `<div class="legend">${groups.map(g => `<span style="--pc:${pcol(g.pl)}">${pdot(g.pl)}${esc(g.pl.name)}</span>`).join("")}</div>`
+        : `<span class="legendnote">横軸は手数、縦軸は累計。0より上が浮き、下が沈み。</span>`}</div>
+      <div class="chart" id="chart"><svg id="chartSvg" role="img" aria-label="累計のチップ増減の推移"></svg><div class="tip" id="tip" hidden></div></div>
+      ${compare ? `<p class="legendnote">横軸はそれぞれの手数です。線にふれると、その手数での全員の累計が出ます。</p>` : ""}
+    </section>
+
+    <section class="panel">
+      <div class="panelhead">
+        <h3>罫線</h3>
+        <div class="seg" id="roadSeg"><button type="button" data-r="big">大路</button><button type="button" data-r="bead">珠盤路</button></div>
+      </div>
+      <div id="roads"></div>
+      <div class="roadkey">
+        <span><span class="bead w">9</span>勝ち（中は勝った点数）</span>
+        <span><span class="bead l">8</span>負け（中はディーラーの点数）</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panelhead"><h3>履歴</h3>${state.day === "all" ? "" : `<button type="button" class="ghostbtn" id="delDay">${state.filter === "all" ? "この日" : esc(who.slice(0, -1)) + "のこの日"}の記録を全部削除</button>`}</div>
+      <p class="legendnote">行を押すと、記録先・勝ち負け・点数の修正や削除ができます。間違えても「1つ戻す」で元に戻せます。</p>
+      <div class="scroll"><table class="hands">
+        <thead><tr><th>#</th><th>時刻</th>${multi ? "<th>戦績</th>" : ""}<th>結果</th><th>点</th><th>ベット</th><th>増減</th><th>累計</th><th></th></tr></thead>
+        <tbody id="handRows"></tbody>
+      </table></div>
+    </section>`;
+
+  drawChart(groups.map(g => ({ pl: g.pl, series: statsOf(g.hands).series })), compare);
+  drawRoads(groups, compare);
+  document.querySelectorAll("#roadSeg button").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.r === state.road));
+    b.addEventListener("click", () => { state.road = b.dataset.r; document.querySelectorAll("#roadSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); drawRoads(groups, compare); });
+  });
+
+  renderHandRows(hands, multi);
+
+  const del = document.getElementById("delDay");
+  if (del) del.addEventListener("click", () => {
+    if (!del.classList.contains("arm")) { del.classList.add("arm", "delbtn"); del.textContent = `${hands.length}手を消す（もう一度押す）`; setTimeout(() => { if (del.isConnected) { del.classList.remove("arm", "delbtn"); del.textContent = "全部削除"; } }, 4000); return; }
+    const before = (store.days[state.day] || []).slice();
+    const after = state.filter === "all" ? [] : before.filter(h => plId(h) !== state.filter);
+    do_({ t: "setday", key: state.day, before, after });
+  });
+}
+
+function renderHandRows(hands, multi) {
+  // running total per player (or overall when one player is shown)
+  const runs = {};
+  const rows = hands.map((h, i) => {
+    const id = state.filter === "all" && multi ? plId(h) : "_";
+    runs[id] = (runs[id] || 0) + h.d;
+    const nth = hands.slice(0, i + 1).filter(x => (id === "_" ? true : plId(x) === id)).length;
+    return { h, nth, run: runs[id] };
+  }).reverse();
+  const cols = multi ? 9 : 8;
+  const tb = document.getElementById("handRows");
+  tb.innerHTML = rows.map(({ h, nth, run }) => {
+    const pl = playerOf(plId(h)), open = state.open === h.t;
+    return `<tr class="hrow${open ? " open" : ""}" data-t="${h.t}" data-k="${h.k}" tabindex="0" aria-expanded="${open}">
+      <td>${nth}</td><td class="t">${state.day === "all" ? fmtDay(h.k).replace(/（.）/, "") + " " : ""}${fmtTime(h.t)}</td>
+      ${multi ? `<td class="pl" style="--pc:${pcol(pl)}">${pdot(pl)}${esc(pl.name)}</td>` : ""}
+      <td class="res ${h.o === "w" ? "pos" : "neg"}">${h.o === "w" ? "勝" : "負"}</td><td>${h.p === 10 ? "牛牛" : h.p}</td>
+      <td class="bets">${esc(betText(h.b))}</td><td class="${sign(h.d)}">${sfmt(h.d)}</td><td class="${sign(run)}">${sfmt(run)}</td>
+      <td class="x">${open ? "▲" : "▼"}</td></tr>
+      ${open ? `<tr class="editor"><td colspan="${cols}">${editorHtml(h, multi)}</td></tr>` : ""}`;
+  }).join("");
+  tb.querySelectorAll("tr.hrow").forEach(tr => {
+    const toggle = () => { state.open = state.open === +tr.dataset.t ? null : +tr.dataset.t; renderHandRows(hands, multi); };
+    tr.addEventListener("click", toggle);
+    tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  });
+  const ed = tb.querySelector(".editbox");
+  if (ed) wireEditor(ed, hands.find(h => h.t === state.open));
+}
+
+function editorHtml(h, multi) {
+  const pBtns = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => `<button type="button" data-p="${p}" aria-pressed="${h.p === p}">${p === 10 ? "牛牛" : p}</button>`).join("");
+  return `<div class="editbox">
+    ${multi ? `<div class="er"><span>記録先</span><div class="mini">${store.players.map(pl => `<button type="button" class="pchip" style="--pc:${pcol(pl)}" data-pl="${pl.id}" aria-pressed="${plId(h) === pl.id}">${pdot(pl)}<span>${esc(pl.name)}</span></button>`).join("")}</div></div>` : ""}
+    <div class="er"><span>結果</span><div class="mini"><button type="button" data-o="w" aria-pressed="${h.o === "w"}">勝ち</button><button type="button" data-o="l" aria-pressed="${h.o === "l"}">負け</button></div></div>
+    <div class="er"><span>点数</span><div class="mini">${pBtns}</div></div>
+    <div class="foot"><span>この手の増減 <span class="amt ${sign(h.d)}">${sfmt(h.d)}</span>${h.r ? `<small class="neg">（レーキ −${fmt(h.r)}）</small>` : ""}</span>
+      <button type="button" class="delbtn" data-del>この手を削除</button></div>
+  </div>`;
+}
+
+function wireEditor(ed, h) {
+  const change = patch => {
+    const after = { ...h, ...patch }; delete after.k;
+    Object.assign(after, amounts(after.b, after.o, after.p, state.mode));
+    const before = { ...h }; delete before.k;
+    do_({ t: "edit", key: h.k, before, after });
+  };
+  ed.querySelectorAll("[data-pl]").forEach(b => b.addEventListener("click", () => { if (b.dataset.pl !== plId(h)) change({ pl: b.dataset.pl }); }));
+  ed.querySelectorAll("[data-o]").forEach(b => b.addEventListener("click", () => { if (b.dataset.o !== h.o) change({ o: b.dataset.o }); }));
+  ed.querySelectorAll("[data-p]").forEach(b => b.addEventListener("click", () => { if (+b.dataset.p !== h.p) change({ p: +b.dataset.p }); }));
+  ed.querySelector("[data-del]").addEventListener("click", () => {
+    const hand = { ...h }; delete hand.k; state.open = null;
+    do_({ t: "del", key: h.k, hand });
+    showToast("削除しました：" + handText(hand), true);
+  });
+}
+
+function niceStep(range, target) {
+  const raw = range / target, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const n = raw / mag;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag;
+}
+
+function drawChart(lines, compare) {
+  const svg = document.getElementById("chartSvg"), wrap = document.getElementById("chart"), tip = document.getElementById("tip");
+  const W = Math.max(280, wrap.clientWidth), H = 250;
+  const padL = 56, padR = compare ? 76 : 14, padT = 14, padB = 26;
+  const vals = lines.flatMap(l => l.series.map(s => s.c));
+  let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+  if (lo === hi) { hi += 1000; lo -= 1000; }
+  const step = niceStep(hi - lo, 4);
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const n = Math.max(1, ...lines.map(l => l.series.length - 1));
+  const x = i => padL + i / n * (W - padL - padR);
+  const y = v => padT + (hi - v) / (hi - lo) * (H - padT - padB);
+  const y0 = y(0);
+
+  let g = "";
+  for (let v = lo; v <= hi + 1e-9; v += step) {
+    g += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1" ${v === 0 ? "" : 'stroke-dasharray="2 4"'} opacity="${v === 0 ? 1 : .7}"/>`;
+    g += `<text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--num)">${v === 0 ? "0" : sfmt(v)}</text>`;
+  }
+  const xs = Math.max(1, niceStep(n, 5));
+  for (let i = 0; i <= n; i += xs) g += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--faint)" font-family="var(--num)">${i}</text>`;
+
+  const path = s => "M" + s.map(p => `${x(p.i).toFixed(1)},${y(p.c).toFixed(1)}`).join("L");
+  let marks = "";
+  if (!compare) {
+    const s = lines[0].series, last = s[s.length - 1], line = path(s);
+    const area = `${line}L${x(last.i).toFixed(1)},${y0}L${x(0).toFixed(1)},${y0}Z`;
+    const lastColor = last.c > 0 ? "var(--win)" : last.c < 0 ? "var(--coral)" : "var(--chalk)";
+    marks = `
+      <defs><clipPath id="above"><rect x="0" y="0" width="${W}" height="${y0}"/></clipPath><clipPath id="below"><rect x="0" y="${y0}" width="${W}" height="${H - y0}"/></clipPath></defs>
+      <path d="${area}" fill="var(--win)" opacity=".16" clip-path="url(#above)"/>
+      <path d="${area}" fill="var(--coral)" opacity=".18" clip-path="url(#below)"/>
+      <path d="${line}" fill="none" stroke="var(--win)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#above)"/>
+      <path d="${line}" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#below)"/>
+      <circle cx="${x(last.i)}" cy="${y(last.c)}" r="5" fill="${lastColor}" stroke="var(--board)" stroke-width="2"/>
+      <text x="${x(last.i)}" y="${y(last.c) + (last.c >= 0 ? -12 : 20)}" text-anchor="end" font-size="12" font-weight="600" fill="var(--chalk)" font-family="var(--num)">${sfmt(last.c)}</text>`;
+  } else {
+    // one line per player in its own color; endpoint labels pushed apart so they never overlap
+    const ends = lines.map(l => { const last = l.series[l.series.length - 1]; return { l, last, ly: y(last.c) }; }).sort((a, b) => a.ly - b.ly);
+    for (let i = 1; i < ends.length; i++) ends[i].ly = Math.max(ends[i].ly, ends[i - 1].ly + 15);
+    const over = ends.length ? ends[ends.length - 1].ly - (H - padB) : 0;
+    if (over > 0) ends.forEach(e => e.ly -= over);
+    marks = lines.map(l => `<path d="${path(l.series)}" fill="none" stroke="${pcol(l.pl)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`).join("")
+      + ends.map(e => `<circle cx="${x(e.last.i)}" cy="${y(e.last.c)}" r="4.5" fill="${pcol(e.l.pl)}" stroke="var(--board)" stroke-width="2"/>
+        <text x="${W - padR + 8}" y="${e.ly + 4}" font-size="11" font-weight="600" fill="var(--chalk)" font-family="var(--num)">${sfmt(e.last.c)}</text>`).join("");
+  }
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = `${g}${marks}
+    <line id="xh" y1="${padT}" y2="${H - padB}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/>
+    <g id="xds"></g>
+    <rect x="${padL}" y="0" width="${W - padL - padR}" height="${H}" fill="transparent" id="hit"/>`;
+
+  const xh = svg.querySelector("#xh"), xds = svg.querySelector("#xds"), hit = svg.querySelector("#hit");
+  const move = e => {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (W / r.width);
+    const i = Math.max(0, Math.min(n, Math.round((px - padL) / (W - padL - padR) * n)));
+    xh.setAttribute("x1", x(i)); xh.setAttribute("x2", x(i)); xh.setAttribute("visibility", "visible");
+    const at = lines.map(l => ({ l, s: l.series[Math.min(i, l.series.length - 1)], done: i > l.series.length - 1 }));
+    xds.innerHTML = at.map(a => `<circle cx="${x(a.s.i)}" cy="${y(a.s.c)}" r="5" fill="${compare ? pcol(a.l.pl) : "var(--chalk)"}" stroke="var(--board)" stroke-width="2"/>`).join("");
+    if (!compare) {
+      const s = at[0].s;
+      tip.innerHTML = s.h
+        ? `第${i}手 ${fmtTime(s.h.t)}<br>${s.h.o === "w" ? "勝ち" : "負け"}・${ptsLabel(s.h.p)}　<b class="${sign(s.h.d)}">${sfmt(s.h.d)}</b><br>累計 <b class="${sign(s.c)}">${sfmt(s.c)}</b>`
+        : `スタート<br>累計 <b>0</b>`;
+    } else {
+      tip.innerHTML = `${i}手目の累計` + at.map(a => `<br><span class="legend" style="--pc:${pcol(a.l.pl)}">${pdot(a.l.pl)}</span>${esc(a.l.pl.name)} <b class="${sign(a.s.c)}">${sfmt(a.s.c)}</b>${a.done ? `<small style="color:var(--faint)">（${a.s.i}手で終了）</small>` : ""}`).join("");
+    }
+    tip.hidden = false;
+    const tx = x(i) * (r.width / W), tw = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(r.width - tw, tx - tw / 2)) + "px";
+    const topY = Math.min(...at.map(a => y(a.s.c)));
+    tip.style.top = Math.max(0, topY * (r.height / H) - tip.offsetHeight - 14) + "px";
+  };
+  const leave = () => { xh.setAttribute("visibility", "hidden"); xds.innerHTML = ""; tip.hidden = true; };
+  hit.addEventListener("pointermove", move);
+  hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", leave);
+}
+
+function roadCells(hands) {
+  const cells = [];
+  if (state.road === "bead") {
+    hands.forEach((h, i) => cells.push({ c: Math.floor(i / 6), r: i % 6, h }));
+  } else {
+    // 大路: same result goes down; at row 6 or a taken cell it turns right (dragon tail)
+    const taken = new Set(); let start = -1, c = 0, r = 0, prev = null;
+    hands.forEach(h => {
+      if (h.o !== prev) { start++; c = start; r = 0; }
+      else if (r + 1 < 6 && !taken.has(c + ":" + (r + 1))) r++;
+      else c++;
+      taken.add(c + ":" + r); cells.push({ c, r, h }); prev = h.o;
+    });
+  }
+  return cells;
+}
+function drawRoads(groups, compare) {
+  const host = document.getElementById("roads");
+  host.innerHTML = groups.map((g, gi) => {
+    const cells = roadCells(g.hands), s = statsOf(g.hands);
+    const cols = Math.max(12, ...cells.map(x => x.c + 2));
+    return `<div class="block">
+      <div class="roadlabel" style="--pc:${pcol(g.pl)}">${compare ? `<i></i>${esc(g.pl.name)}` : ""}<small>いま ${s.run}${s.cur === "w" ? "連勝" : "連敗"}中・${s.wins}勝${s.n - s.wins}敗</small></div>
+      <div class="road" data-road="${gi}"><div class="roadgrid" style="grid-template-columns: repeat(${cols}, var(--cell))">${cells.map((x, i) =>
+        `<span class="bead ${x.h.o}${x.h.p === 10 ? " niu" : ""}${i === cells.length - 1 ? " last" : ""}" style="grid-column:${x.c + 1};grid-row:${x.r + 1}" title="${x.h.o === "w" ? "勝ち" : "負け"} ${ptsLabel(x.h.p)} ${sfmt(x.h.d)}">${x.h.p === 10 ? "牛" : x.h.p}</span>`).join("")}</div></div>
+    </div>`;
+  }).join("");
+  // show the newest bead: scroll only as far as needed, never past the first column
+  host.querySelectorAll(".road").forEach(r => {
+    const last = r.querySelector(".bead.last");
+    r.scrollLeft = last ? Math.max(0, last.offsetLeft + last.offsetWidth + 40 - r.clientWidth) : 0;
+  });
+}
+
+let resizeT;
+window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (state.view === "log") renderLog(); }, 150); });
+
+function renderAll() {
+  renderStatus();
+  renderWho();
+  renderCalc();
+  renderUndo();
+  if (state.view === "log") renderLog();
+  if (state.view === "table") renderCards();
+}
+
+route();
+renderAll();
+connect();
+wireTablePanel();
+</script>
+
+</body>
+</html>
