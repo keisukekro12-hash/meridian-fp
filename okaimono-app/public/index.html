@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>おつかいボタン</title>
+<meta name="theme-color" content="#1f6f4a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #fbf8f1;
+    --ink: #1c1c1c;
+    --sub: #555;
+    --card: #ffffff;
+    --line: #d9d2c3;
+    --go: #1f6f4a;
+    --go-ink: #ffffff;
+    --mic: #c2410c;
+    --mic-ink: #ffffff;
+    --soft: #ece6d8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Sans", "BIZ UDPGothic", "Noto Sans JP", sans-serif;
+    font-size: 24px;
+    line-height: 1.6;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+  h1 { font-size: 28px; margin: 4px 0 12px; text-align: center; letter-spacing: .05em; }
+  .screen { display: none; flex: 1; flex-direction: column; gap: 20px; }
+  .screen.active { display: flex; }
+  .msg { font-size: 26px; text-align: center; font-weight: 700; margin: 0; }
+  .hint { font-size: 20px; color: var(--sub); text-align: center; margin: 0; }
+  button {
+    font: inherit; font-weight: 700; border: none; border-radius: 20px;
+    padding: 22px 16px; width: 100%; cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:active { transform: scale(.98); }
+  .mic {
+    background: var(--mic); color: var(--mic-ink);
+    width: min(78vw, 300px); aspect-ratio: 1; border-radius: 50%;
+    align-self: center; margin: auto 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    font-size: 30px; box-shadow: 0 8px 0 #8a2e08;
+  }
+  .mic .icon { font-size: 80px; line-height: 1; }
+  .mic.listening { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 8px 0 #8a2e08, 0 0 0 24px rgba(194,65,12,.18); } }
+  .go { background: var(--go); color: var(--go-ink); font-size: 30px; box-shadow: 0 6px 0 #124530; }
+  .sub { background: var(--soft); color: var(--ink); box-shadow: 0 6px 0 var(--line); }
+  .heard {
+    background: var(--card); border: 2px dashed var(--line); border-radius: 16px;
+    padding: 14px; min-height: 3.4em; font-size: 22px; color: var(--sub);
+  }
+  ul.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  ul.items li {
+    background: var(--card); border: 2px solid var(--line); border-radius: 16px;
+    padding: 14px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  }
+  .name { font-size: 28px; font-weight: 700; word-break: break-all; }
+  .qty { font-size: 26px; white-space: nowrap; }
+  .note { display: block; font-size: 18px; color: var(--sub); font-weight: 400; }
+  .row { display: flex; flex-direction: column; gap: 14px; margin-top: auto; }
+  .big-check { font-size: 120px; text-align: center; line-height: 1; margin-top: 24px; color: var(--go); }
+  textarea {
+    font: inherit; width: 100%; min-height: 5em; border-radius: 16px; border: 2px solid var(--line);
+    padding: 12px; background: var(--card); color: var(--ink);
+  }
+  .spinner {
+    width: 72px; height: 72px; border-radius: 50%; margin: 40px auto 0;
+    border: 8px solid var(--soft); border-top-color: var(--go); animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <h1>🛒 おつかいボタン</h1>
+
+  <!-- 1. 話す -->
+  <section class="screen active" id="s-start">
+    <p class="msg">ほしい物を<br>声で言ってください</p>
+    <p class="hint">例:「牛乳を2本と、食パンを1つ」</p>
+    <button class="mic" id="micBtn" aria-label="押して話す">
+      <span class="icon" aria-hidden="true">🎤</span>
+      <span id="micLabel">押して話す</span>
+    </button>
+    <div class="heard" id="heard" aria-live="polite" hidden></div>
+    <div id="typeBox" hidden>
+      <p class="hint">この端末では声の入力が使えません。<br>キーボードのマイクで話すか、文字で書いてください。</p>
+      <textarea id="typed" placeholder="牛乳 2本、食パン 1つ"></textarea>
+      <button class="go" id="typedBtn" style="margin-top:12px">これで決める</button>
+    </div>
+  </section>
+
+  <!-- 2. 考え中 -->
+  <section class="screen" id="s-thinking">
+    <div class="spinner" role="progressbar" aria-label="考え中"></div>
+    <p class="msg">ちょっと待ってね…</p>
+  </section>
+
+  <!-- 3. 確認 -->
+  <section class="screen" id="s-confirm">
+    <p class="msg" id="confirmTitle">これでいいですか？</p>
+    <ul class="items" id="items"></ul>
+    <div class="row">
+      <button class="go" id="sendBtn">はい、家族に送る</button>
+      <button class="sub" id="addBtn">🎤 付け足す</button>
+      <button class="sub" id="retryBtn">最初から言い直す</button>
+    </div>
+  </section>
+
+  <!-- 4. 送った -->
+  <section class="screen" id="s-done">
+    <div class="big-check" aria-hidden="true">✓</div>
+    <p class="msg">家族に送りました</p>
+    <p class="hint">家族が注文してくれます。<br>届くまで待っていてくださいね。</p>
+    <div class="row"><button class="sub" id="againBtn">ほかにも頼む</button></div>
+  </section>
+
+  <!-- エラー -->
+  <section class="screen" id="s-error">
+    <p class="msg" id="errorMsg">うまくいきませんでした</p>
+    <p class="hint">電波のよい所で、もう一度ためしてください。<br>だめなときは家族に電話してください。</p>
+    <div class="row"><button class="go" id="errorBtn">もう一度</button></div>
+  </section>
+
+<script>
+(() => {
+  // 合言葉: URL の ?key=... を一度開けば端末に記憶する
+  const params = new URLSearchParams(location.search);
+  let appKey = "";
+  try {
+    if (params.get("key")) localStorage.setItem("okaimono-key", params.get("key"));
+    appKey = localStorage.getItem("okaimono-key") || "";
+  } catch { appKey = params.get("key") || ""; }
+
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => {
+    document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
+    window.scrollTo(0, 0);
+  };
+
+  let items = [];
+  let appending = false;
+
+  // ---- 読み上げ ----
+  function speak(text) {
+    if (!("speechSynthesis" in window) || !text) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.rate = 0.85; // ゆっくり
+    speechSynthesis.speak(u);
+  }
+
+  // ---- API ----
+  async function post(path, body) {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-app-key": appKey },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) throw new Error("この端末は登録されていません。家族に設定してもらってください。");
+    if (!res.ok) throw new Error("うまくいきませんでした");
+    return res.json();
+  }
+
+  function fail(err) {
+    $("errorMsg").textContent = err.message || "うまくいきませんでした";
+    show("s-error");
+    speak($("errorMsg").textContent);
+  }
+
+  // ---- リスト表示 ----
+  function renderItems() {
+    const ul = $("items");
+    ul.replaceChildren(...items.map((it) => {
+      const li = document.createElement("li");
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = it.name;
+      if (it.note) {
+        const n = document.createElement("span");
+        n.className = "note";
+        n.textContent = it.note;
+        name.append(n);
+      }
+      const qty = document.createElement("span");
+      qty.className = "qty";
+      qty.textContent = it.quantity;
+      li.append(name, qty);
+      return li;
+    }));
+  }
+
+  function mergeItems(base, extra) {
+    const out = [...base];
+    for (const it of extra) {
+      const i = out.findIndex((o) => o.name === it.name);
+      if (i >= 0) out[i] = it; else out.push(it);
+    }
+    return out;
+  }
+
+  async function handleText(text) {
+    if (!text.trim()) return;
+    show("s-thinking");
+    try {
+      const result = await post("api/parse", { text });
+      if (!result.items?.length) {
+        show(appending ? "s-confirm" : "s-start");
+        speak(result.confirmation);
+        return;
+      }
+      items = appending ? mergeItems(items, result.items) : result.items;
+      appending = false;
+      renderItems();
+      show("s-confirm");
+      speak(result.confirmation);
+    } catch (err) { fail(err); }
+  }
+
+  // ---- 音声入力 ----
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null;
+  let listening = false;
+
+  function setListening(on) {
+    listening = on;
+    $("micBtn").classList.toggle("listening", on);
+    $("micLabel").textContent = on ? "聞いています…" : "押して話す";
+  }
+
+  function startListening() {
+    if (!SR) { show("s-start"); $("typeBox").hidden = false; $("micBtn").hidden = true; $("typed").focus(); return; }
+    if (listening) { rec?.stop(); return; }
+    speechSynthesis?.cancel();
+    rec = new SR();
+    rec.lang = "ja-JP";
+    rec.interimResults = true;
+    rec.continuous = false;
+    let finalText = "";
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += t; else interim += t;
+      }
+      $("heard").hidden = false;
+      $("heard").textContent = finalText + interim;
+    };
+    rec.onerror = (e) => {
+      setListening(false);
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        $("typeBox").hidden = false;
+        speak("マイクが使えませんでした。家族に設定してもらってください。");
+      }
+    };
+    rec.onend = () => {
+      setListening(false);
+      const text = finalText || $("heard").textContent;
+      $("heard").hidden = true;
+      $("heard").textContent = "";
+      if (text.trim()) handleText(text);
+      else if (appending) show("s-confirm");
+    };
+    show("s-start");
+    setListening(true);
+    rec.start();
+  }
+
+  // ---- ボタン ----
+  $("micBtn").onclick = startListening;
+  $("typedBtn").onclick = () => handleText($("typed").value);
+  $("addBtn").onclick = () => { appending = true; startListening(); };
+  $("retryBtn").onclick = () => { items = []; appending = false; show("s-start"); };
+  $("sendBtn").onclick = async () => {
+    show("s-thinking");
+    try {
+      await post("api/send", { items });
+      items = [];
+      $("typed").value = "";
+      show("s-done");
+      speak("家族に送りました。届くまで待っていてくださいね。");
+    } catch (err) { fail(err); }
+  };
+  $("againBtn").onclick = () => show("s-start");
+  $("errorBtn").onclick = () => show(items.length ? "s-confirm" : "s-start");
+})();
+</script>
+</body>
+</html>

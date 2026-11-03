@@ -1,0 +1,10 @@
+{
+  "name": "おつかいボタン",
+  "short_name": "おつかい",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fbf8f1",
+  "theme_color": "#1f6f4a",
+  "lang": "ja",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
